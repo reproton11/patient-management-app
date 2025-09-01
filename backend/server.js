@@ -5,65 +5,58 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000; // Gunakan PORT dari env atau fallback ke 3000
 const MONGO_URI = process.env.MONGO_URI;
+const CORS_ORIGIN = process.env.CORS_ORIGIN;
 
-/* --------------------------------------------------
-   Middleware
--------------------------------------------------- */
-app.use(
-  cors({
-    origin: "http://localhost:5173", // Frontend Vite
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+// Konfigurasi CORS
+const corsOptions = {
+  origin: CORS_ORIGIN ? CORS_ORIGIN.split(",") : "*",
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  credentials: true,
+  optionsSuccessStatus: 204,
+};
+app.use(cors(corsOptions));
 
-/* --------------------------------------------------
-   Async bootstrap
--------------------------------------------------- */
-async function startServer() {
-  try {
-    /* 1. Hubungkan MongoDB */
-    await mongoose.connect(MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log("MongoDB Connected...");
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-    /* 2. Inisialisasi GridFS storage untuk multer
-           (harus setelah koneksi terbuka) */
-    const uploadController = require("./controllers/uploadController");
-    uploadController.initGridFS(mongoose.connection);
+// Koneksi ke MongoDB
+mongoose
+  .connect(MONGO_URI)
+  .then(() => console.log("MongoDB Connected..."))
+  .catch((err) => console.error("Failed to connect to MongoDB:", err)); // Log error lebih detail
 
-    /* 3. Impor & daftarkan routes */
-    const uploadRoutes = require("./routes/uploadRoutes");
-    const pasienRoutes = require("./routes/pasienRoutes");
-    const konsultasiRoutes = require("./routes/konsultasiRoutes");
+// Impor rute
+const pasienRoutes = require("./routes/pasienRoutes");
+const konsultasiRoutes = require("./routes/konsultasiRoutes");
+const uploadRoutes = require("./routes/uploadRoutes");
 
-    app.use("/api/upload", uploadRoutes);
-    app.use("/api/pasien", pasienRoutes);
-    app.use("/api/konsultasi", konsultasiRoutes);
+// Gunakan rute dengan prefix /api
+app.use("/api/pasien", pasienRoutes);
+app.use("/api/konsultasi", konsultasiRoutes);
+app.use("/api/upload", uploadRoutes);
 
-    /* 4. Route default */
-    app.get("/api", (req, res) => {
-      res.send("Patient Management API is running...");
-    });
+// Rute default untuk testing base URL
+app.get("/api", (req, res) => {
+  // UBAH INI: Pastikan ada /api di sini
+  res.send("Patient Management API is running...");
+});
 
-    /* 5. Jalankan server */
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  } catch (err) {
-    console.error("Failed to connect to MongoDB or start server:", err);
-    process.exit(1);
-  }
-}
+// Handle 404 Not Found untuk semua rute yang tidak terdefinisi
+app.use((req, res, next) => {
+  res.status(404).json({ message: "API Endpoint Not Found" });
+});
 
-/* --------------------------------------------------
-   Mulai server
--------------------------------------------------- */
-startServer();
+// Global Error Handler (opsional, tapi baik untuk debugging)
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send("Something broke!");
+});
+
+// Mulai server
+app.listen(PORT, "0.0.0.0", () => {
+  // PENTING: Listen di '0.0.0.0'
+  console.log(`Server running on port ${PORT}`);
+  console.log(`CORS allowed origin(s): ${CORS_ORIGIN || "*"}`);
+});
