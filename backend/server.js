@@ -49,7 +49,7 @@ async function startServer() {
     app.use("/api/konsultasi", konsultasiRoutes);
 
     /* 4. Route default */
-    app.get("/", (req, res) => {
+    app.get("/api", (req, res) => {
       res.send("Patient Management API is running...");
     });
 
