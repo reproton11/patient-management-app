@@ -1,0 +1,58 @@
+/* patient-management-app/frontend/src/index.css */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom scrollbar for better UX */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #a8a8a8;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #888;
+}
+
+body {
+  font-family: "Inter", "Poppins", sans-serif;
+  @apply bg-gray-50 text-gray-800;
+}
+
+/* Global Print Styles (ini tetap berlaku untuk browser print) */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  aside {
+    display: none !important;
+  }
+  main {
+    margin-left: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+  /* Pastikan area cetak tidak disembunyikan saat print */
+  .print-area-wrapper {
+    display: block !important;
+    position: relative !important; /* Agar diatur ulang untuk print */
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    opacity: 1 !important;
+    z-index: auto !important;
+  }
+}
