@@ -1,5 +1,8 @@
 // patient-management-app/backend/server.js
-// ... (imports) ...
+require("dotenv").config();
+const express = require("express"); // <--- PASTIKAN BARIS INI ADA!
+const mongoose = require("mongoose");
+const cors = require("cors");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
