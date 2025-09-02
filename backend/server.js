@@ -10,12 +10,14 @@ const MONGO_URI = process.env.MONGO_URI;
 const CORS_ORIGIN = process.env.CORS_ORIGIN;
 
 // Konfigurasi CORS
+// Contoh di Node.js dengan Express dan middleware CORS
+const cors = require('cors');
+
 const corsOptions = {
-  origin: CORS_ORIGIN ? CORS_ORIGIN.split(",") : "*",
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  credentials: true,
-  optionsSuccessStatus: 204,
+  origin: process.env.CORS_ORIGIN,
+  optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
 };
+
 app.use(cors(corsOptions));
 
 app.use(express.json());
