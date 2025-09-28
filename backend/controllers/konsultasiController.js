@@ -2,19 +2,8 @@ const Konsultasi = require("../models/Konsultasi");
 const Pasien = require("../models/Pasien");
 const Joi = require("@hapi/joi");
 const mongoose = require("mongoose");
-const Grid = require("gridfs-stream"); // Akan diinisialisasi di uploadController
+// Akan diinisialisasi di uploadController
 const mongoosePaginate = require("mongoose-paginate-v2");
-
-let gfs; // Variable global untuk GridFS
-let gridfsBucket;
-const conn = mongoose.connection;
-conn.once("open", () => {
-  gridfsBucket = new mongoose.mongo.GridFSBucket(conn.db, {
-    bucketName: "uploads",
-  });
-  gfs = Grid(conn.db, mongoose.mongo);
-  gfs.collection("uploads"); // Nama koleksi untuk GridFS
-});
 
 // Schema validasi Joi untuk konsultasi
 const konsultasiSchema = Joi.object({
@@ -229,26 +218,6 @@ exports.deleteKonsultasi = async (req, res) => {
 
     if (!konsultasi) {
       return res.status(404).json({ message: "Konsultasi tidak ditemukan" });
-    }
-
-    if (!gridfsBucket) {
-      // Ini seharusnya tidak terjadi jika koneksi MongoDB sudah open, tapi sebagai fallback
-      console.error(
-        "GridFSBucket not initialized when trying to delete files."
-      );
-      return res
-        .status(500)
-        .json({ message: "Sistem penyimpanan file tidak siap." });
-    }
-
-    // Hapus file-file terkait di GridFS
-    for (const fileRef of konsultasi.files) {
-      if (gfs) {
-        await gfs.remove({ _id: fileRef.gridFsId, root: "uploads" });
-        console.log(
-          `File GridFS ${fileRef.namaFile} (${fileRef.gridFsId}) dihapus.`
-        );
-      }
     }
 
     await Konsultasi.findByIdAndDelete(req.params.id);

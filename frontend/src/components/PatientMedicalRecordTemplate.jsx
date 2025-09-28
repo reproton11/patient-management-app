@@ -3,6 +3,18 @@ import React from "react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 
+// Fungsi calculateAge yang sama
+const calculateAge = (dob) => {
+  const birthDate = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+};
+
 const PatientMedicalRecordTemplate = React.forwardRef(
   ({ patient, consultations }, ref) => {
     if (!patient) {
@@ -23,10 +35,8 @@ const PatientMedicalRecordTemplate = React.forwardRef(
           boxSizing: "border-box",
         }}
       >
-        {/* Hapus tag <style> di sini */}
-        {/* <style> ... </style> */}
+        {/* Semua style inline di bawah ini sudah diperbaiki */}
 
-        {/* Konten template ... tetap sama */}
         <div
           className="header"
           style={{
@@ -172,10 +182,29 @@ const PatientMedicalRecordTemplate = React.forwardRef(
               className="info-label"
               style={{ fontWeight: "bold", color: "#4a5568" }}
             >
+              Tanggal Lahir:
+            </span>
+            <span className="info-value" style={{ color: "#2d3748" }}>
+              {patient.tanggalLahir
+                ? format(new Date(patient.tanggalLahir), "dd MMMM yyyy", {
+                    locale: id,
+                  })
+                : "-"}
+            </span>
+          </div>
+          <div
+            className="info-item"
+            style={{ display: "flex", flexDirection: "column" }}
+          >
+            <span
+              className="info-label"
+              style={{ fontWeight: "bold", color: "#4a5568" }}
+            >
               Umur:
             </span>
             <span className="info-value" style={{ color: "#2d3748" }}>
-              {patient.umur} tahun
+              {patient.tanggalLahir ? calculateAge(patient.tanggalLahir) : "-"}{" "}
+              tahun
             </span>
           </div>
           <div
@@ -260,7 +289,6 @@ const PatientMedicalRecordTemplate = React.forwardRef(
         {consultations && consultations.length > 0 && (
           <>
             <div style={{ pageBreakBefore: "always" }}></div>{" "}
-            {/* Pemisah halaman jika ada banyak konsultasi */}
             <div
               className="section-title"
               style={{
@@ -296,11 +324,13 @@ const PatientMedicalRecordTemplate = React.forwardRef(
                   }}
                 >
                   Konsultasi #{consultations.length - index} -{" "}
-                  {format(
-                    new Date(consultation.tanggalKonsultasi),
-                    "dd MMMM yyyy, HH:mm",
-                    { locale: id }
-                  )}{" "}
+                  {consultation.tanggalKonsultasi
+                    ? format(
+                        new Date(consultation.tanggalKonsultasi),
+                        "dd MMMM yyyy, HH:mm",
+                        { locale: id }
+                      )
+                    : "-"}{" "}
                   ({consultation.petugasKonsultasi})
                 </h3>
                 <div
@@ -389,34 +419,6 @@ const PatientMedicalRecordTemplate = React.forwardRef(
                   )}
                 </ul>
 
-                {consultation.files && consultation.files.length > 0 && (
-                  <div style={{ marginTop: "15px" }}>
-                    <p
-                      className="info-label"
-                      style={{ fontWeight: "bold", color: "#4a5568" }}
-                    >
-                      Dokumen Terlampir:
-                    </p>
-                    <ul
-                      style={{
-                        marginLeft: "20px",
-                        listStyleType: "square",
-                        color: "#2d3748",
-                        margin: "0 0 0 20px",
-                      }}
-                    >
-                      {consultation.files.map((file) => (
-                        <li key={file.gridFsId}>
-                          {file.namaFile} ({file.tipe}) -{" "}
-                          {format(new Date(file.tanggalUpload), "dd MMM yyyy", {
-                            locale: id,
-                          })}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
                 {index < consultations.length - 1 && (
                   <div
                     style={{
@@ -425,8 +427,6 @@ const PatientMedicalRecordTemplate = React.forwardRef(
                     }}
                   ></div>
                 )}
-                {/* Hapus page-break conditional di sini, biarkan html2canvas/jspdf yang menangani */}
-                {/* {index < consultations.length - 1 && (index + 1) % 2 === 0 && <div className="page-break"></div>} */}
               </div>
             ))}
           </>
@@ -437,7 +437,7 @@ const PatientMedicalRecordTemplate = React.forwardRef(
           style={{
             textAlign: "center",
             marginTop: "30px",
-            fontSize: "12px",
+            fontSize: "10px",
             color: "#718096",
             borderTop: "1px dashed #e2e8f0",
             paddingTop: "10px",

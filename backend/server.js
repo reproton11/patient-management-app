@@ -54,18 +54,16 @@ mongoose
     // process.exit(1);
   });
 
-// Mengimpor modul rute yang telah kita buat
+// Mengimpor modul rute yang telah kita buat (Update:Sudah dihapus dalam update fitur 25/9/2025)
 const pasienRoutes = require("./routes/pasienRoutes");
 const konsultasiRoutes = require("./routes/konsultasiRoutes");
-const uploadRoutes = require("./routes/uploadRoutes");
 
 // Menggunakan modul rute dengan prefix API
 // Semua rute di pasienRoutes akan diakses melalui /api/pasien
 app.use("/api/pasien", pasienRoutes);
 // Semua rute di konsultasiRoutes akan diakses melalui /api/konsultasi
 app.use("/api/konsultasi", konsultasiRoutes);
-// Semua rute di uploadRoutes akan diakses melalui /api/upload
-app.use("/api/upload", uploadRoutes);
+// Semua rute di uploadRoutes akan diakses melalui /api/upload (Update:Sudah dihapus dalam update fitur 25/9/2025)
 
 // Rute dasar untuk Healthcheck Railway (PENTING untuk Railway Healthcheck Path: `/`)
 // Ini merespons dengan status 200 OK secara cepat

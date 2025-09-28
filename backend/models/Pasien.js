@@ -33,11 +33,9 @@ const pasienSchema = new Schema(
       enum: ["Laki-laki", "Perempuan", "Other"], // Menambah "Other" sebagai opsi aman
       required: true,
     },
-    umur: {
-      type: Number,
+    tanggalLahir: {
+      type: Date,
       required: true,
-      min: 0,
-      max: 150,
     },
     noHP: {
       type: String,

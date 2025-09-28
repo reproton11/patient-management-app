@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import api from "../services/api"; // Pastikan ini ada
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({ today: 0, week: 0, month: 0 });
