@@ -30,7 +30,7 @@ const RegisterPatient = () => {
     nama: "",
     alamat: { provinsi: "", kabupaten: "", kecamatan: "", kelurahan: "" },
     jenisKelamin: "",
-    umur: "",
+    tanggalLahir: "",
     noHP: "",
     tensi: { sistolik: "", diastolik: "" },
     tinggiBadan: "",
@@ -147,7 +147,7 @@ const RegisterPatient = () => {
         nama: "",
         alamat: { provinsi: "", kabupaten: "", kecamatan: "", kelurahan: "" },
         jenisKelamin: "",
-        umur: "",
+        tanggalLahir: "",
         noHP: "",
         tensi: { sistolik: "", diastolik: "" },
         tinggiBadan: "",
@@ -385,26 +385,26 @@ const RegisterPatient = () => {
           </div>
           <div>
             <label
-              htmlFor="umur"
+              htmlFor="tanggalLahir"
               className="block text-sm font-medium text-gray-700"
             >
-              Umur
+              Tanggal Lahir
             </label>
             <input
-              type="number"
-              id="umur"
-              name="umur"
-              value={formData.umur}
+              type="date"
+              id="tanggalLahir"
+              name="tanggalLahir"
+              value={formData.tanggalLahir}
               onChange={handleChange}
               className={`mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                errors.umur ? "border-red-500" : "border-gray-300"
+                errors.tanggalLahir ? "border-red-500" : "border-gray-300"
               }`}
               min="0"
               max="150"
               required
             />
-            {errors.umur && (
-              <p className="mt-1 text-sm text-red-500">{errors.umur}</p>
+            {errors.tanggalLahir && (
+              <p className="mt-1 text-sm text-red-500">{errors.tanggalLahir}</p>
             )}
           </div>
         </div>

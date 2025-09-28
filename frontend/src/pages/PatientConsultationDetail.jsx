@@ -23,6 +23,17 @@ import html2canvas from "html2canvas";
 import PatientMedicalRecordTemplate from "../components/PatientMedicalRecordTemplate";
 import useIndonesiaRegions from "../hooks/useIndonesiaRegions";
 
+const calculateAge = (dob) => {
+  const birthDate = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+};
+
 const petugasOptions = [
   { value: "Arif", label: "Arif" },
   { value: "Rani", label: "Rani" },
@@ -62,14 +73,7 @@ const PatientConsultationDetail = () => {
   const [petugasKonsultasi, setPetugasKonsultasi] = useState("");
   const [formErrors, setFormErrors] = useState({});
 
-  // Upload file state
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [fileType, setFileType] = useState("");
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [previewFileUrl, setPreviewFileUrl] = useState("");
-  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-  const [fileUploadLoading, setLoadingFileUpload] = useState(false);
-  const [petugasUpload, setPetugasUpload] = useState("");
+  // Upload file state (Update:Sudah dihapus dalam update fitur 25/9/2025)
 
   // Edit Patient State
   const [isEditPatientModalOpen, setIsEditPatientModalOpen] = useState(false);
@@ -135,9 +139,6 @@ const PatientConsultationDetail = () => {
     setTherapy("");
     setPetugasKonsultasi("");
     setFormErrors({});
-    setSelectedFile(null);
-    setFileType("");
-    setPetugasUpload("");
     setIsNewConsultation(true);
     setActiveConsultationId(null);
   }, []);
@@ -214,7 +215,9 @@ const PatientConsultationDetail = () => {
         nama: patientData.nama,
         alamat: patientData.alamat,
         jenisKelamin: patientData.jenisKelamin,
-        umur: patientData.umur,
+        tanggalLahir: patientData.tanggalLahir
+          ? format(new Date(patientData.tanggalLahir), "yyyy-MM-dd")
+          : "",
         noHP: patientData.noHP,
         tensi: patientData.tensi || { sistolik: "", diastolik: "" },
         tinggiBadan: patientData.tinggiBadan || "",
@@ -241,19 +244,30 @@ const PatientConsultationDetail = () => {
       setDisplayedConsultations(paginatedConsultationsRes.data.konsultasi);
       setTotalPages(paginatedConsultationsRes.data.totalPages);
 
-      if (paginatedConsultationsRes.data.konsultasi.length > 0) {
-        if (!isNewConsultation) {
-          setActiveConsultationId(
-            paginatedConsultationsRes.data.konsultasi[0]._id
-          );
-          fillFormWithConsultationData(
-            paginatedConsultationsRes.data.konsultasi[0]
-          );
-          setIsNewConsultation(false);
-        }
-      } else {
-        resetFormForNewConsultation(patientData);
-        setIsNewConsultation(true);
+      // Logic untuk menentukan konsultasi aktif
+      // Jika kita sedang dalam mode 'konsultasi baru', jangan override
+      // Jika bukan mode baru dan ada konsultasi, set yang terbaru sebagai aktif
+      if (
+        !isNewConsultation &&
+        paginatedConsultationsRes.data.konsultasi.length > 0
+      ) {
+        setActiveConsultationId(
+          paginatedConsultationsRes.data.konsultasi[0]._id
+        );
+        fillFormWithConsultationData(
+          paginatedConsultationsRes.data.konsultasi[0]
+        );
+      } else if (
+        isNewConsultation &&
+        paginatedConsultationsRes.data.konsultasi.length === 0
+      ) {
+        // Jika sedang mode baru, tapi ternyata tidak ada konsultasi sama sekali,
+        // maka set up form kosong dengan data awal pasien
+        resetFormForNewConsultation(patientRes.data);
+      } else if (paginatedConsultationsRes.data.konsultasi.length === 0) {
+        // Jika tidak ada konsultasi sama sekali, bahkan sebelum klik "Mulai Konsultasi Baru"
+        resetFormForNewConsultation(patientRes.data);
+        setIsNewConsultation(true); // Pastikan ini juga diatur ke true
       }
     } catch (err) {
       console.error("Error fetching patient data or consultations:", err);
@@ -394,6 +408,8 @@ const PatientConsultationDetail = () => {
         });
         toast.success("Konsultasi berhasil diupdate!");
       }
+      setIsNewConsultation(false);
+      // Setelah simpan, refresh data pasien dan konsultasi
       fetchPatientData();
     } catch (err) {
       console.error("Error saving consultation:", err);
@@ -418,114 +434,7 @@ const PatientConsultationDetail = () => {
     }
   };
 
-  // --- File Upload Logic ---
-  const openUploadModal = () => setIsUploadModalOpen(true);
-  const closeUploadModal = () => {
-    setIsUploadModalOpen(false);
-    setSelectedFile(null);
-    setFileType("");
-    setPetugasUpload("");
-  };
-
-  const handleFileChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
-    } else {
-      setSelectedFile(null);
-    }
-  };
-
-  const handleUploadFile = async () => {
-    if (!selectedFile) {
-      toast.error("Pilih file PDF untuk diupload.");
-      return;
-    }
-    if (!fileType) {
-      toast.error("Pilih jenis file (laboratorium/resep).");
-      return;
-    }
-    if (!petugasUpload) {
-      toast.error("Pilih petugas yang mengupload file.");
-      return;
-    }
-    if (!activeConsultationId) {
-      toast.error(
-        "Pilih konsultasi yang akan diupload filenya atau simpan konsultasi baru terlebih dahulu."
-      );
-      return;
-    }
-    if (selectedFile.type !== "application/pdf") {
-      toast.error("Hanya file PDF yang diizinkan!");
-      return;
-    }
-    if (selectedFile.size > 2 * 1024 * 1024) {
-      // 2MB
-      toast.error("Ukuran file maksimal 2MB!");
-      return;
-    }
-
-    setLoadingFileUpload(true);
-    const formData = new FormData();
-    formData.append("file", selectedFile);
-    formData.append("pasienId", patientId);
-    formData.append("tipe", fileType);
-    formData.append("petugasUpload", petugasUpload);
-
-    try {
-      await api.post(`/upload/${activeConsultationId}`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-      toast.success("File berhasil diupload!");
-      closeUploadModal();
-      fetchPatientData();
-    } catch (err) {
-      console.error("Error uploading file:", err);
-      if (err.response && err.response.data && err.response.data.message) {
-        toast.error(err.response.data.message);
-      } else {
-        toast.error("Gagal mengupload file.");
-      }
-    } finally {
-      setLoadingFileUpload(false);
-    }
-  };
-
-  const openPreviewModal = (fileGridFsId) => {
-    const fileUrl = `${api.defaults.baseURL}/upload/file/${fileGridFsId}`;
-    setPreviewFileUrl(fileUrl);
-    setIsPreviewModalOpen(true);
-  };
-
-  const closePreviewModal = () => {
-    setIsPreviewModalOpen(false);
-    setPreviewFileUrl("");
-  };
-
-  const handleDeleteFile = async (fileGridFsId, fileName) => {
-    const petugas = prompt(
-      `Anda yakin ingin menghapus file "${fileName}"? Masukkan nama petugas yang menghapus:`
-    );
-    if (petugas) {
-      setLoading(true);
-      try {
-        await api.delete(
-          `/upload/file/${activeConsultationId}/${fileGridFsId}`,
-          { data: { petugasPenghapus: petugas } }
-        );
-        toast.success("File berhasil dihapus!");
-        fetchPatientData();
-      } catch (err) {
-        console.error("Error deleting file:", err);
-        toast.error("Gagal menghapus file.");
-      } finally {
-        setLoading(false);
-      }
-    } else if (petugas !== null) {
-      toast.error("Penghapusan dibatalkan atau nama petugas tidak diisi.");
-    }
-  };
+  // --- File Upload Logic --- (Update:Sudah dihapus dalam update fitur 25/9/2025)
 
   // --- Edit Patient Logic ---
   const openEditPatientModal = () => {
@@ -534,7 +443,9 @@ const PatientConsultationDetail = () => {
       nama: patientData.nama,
       alamat: patientData.alamat,
       jenisKelamin: patientData.jenisKelamin,
-      umur: patientData.umur,
+      tanggalLahir: patientData.tanggalLahir
+        ? format(new Date(patientData.tanggalLahir), "yyyy-MM-dd")
+        : "",
       noHP: patientData.noHP,
       tensi: patientData.tensi || { sistolik: "", diastolik: "" },
       tinggiBadan: patientData.tinggiBadan || "",
@@ -709,8 +620,21 @@ const PatientConsultationDetail = () => {
             <p>{patient.jenisKelamin}</p>
           </div>
           <div>
+            <p className="font-medium">Tanggal Lahir:</p>
+            <p>
+              {patient.tanggalLahir
+                ? format(new Date(patient.tanggalLahir), "dd MMMM yyyy", {
+                    locale: id,
+                  })
+                : "-"}
+            </p>
+          </div>
+          <div>
             <p className="font-medium">Umur:</p>
-            <p>{patient.umur} tahun</p>
+            <p>
+              {patient.tanggalLahir ? calculateAge(patient.tanggalLahir) : "-"}{" "}
+              tahun
+            </p>
           </div>
           <div>
             <p className="font-medium">No. HP:</p>
@@ -1118,57 +1042,7 @@ const PatientConsultationDetail = () => {
               )}
             </div>
 
-            {/* File Upload Section */}
-            <div className="mt-6 border-t pt-4 border-gray-200">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-semibold text-gray-800">
-                  Dokumen Pendukung (PDF)
-                </h3>
-                <button
-                  onClick={openUploadModal}
-                  className="inline-flex justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200"
-                  disabled={!activeConsultationId}
-                >
-                  <UploadIcon className="h-5 w-5 mr-2" />
-                  Upload PDF
-                </button>
-              </div>
-              {activeConsultationId &&
-              activeConsultation.files &&
-              activeConsultation.files.length > 0 ? (
-                <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {activeConsultation.files.map((file) => (
-                    <li
-                      key={file.gridFsId}
-                      className="flex items-center p-3 border rounded-md bg-gray-50 text-gray-700 hover:bg-gray-100 transition duration-200"
-                    >
-                      <DocumentTextIcon className="h-6 w-6 text-blue-500 mr-3" />
-                      <span className="flex-1 truncate">
-                        {file.namaFile} ({file.tipe})
-                      </span>
-                      <button
-                        onClick={() => openPreviewModal(file.gridFsId)}
-                        className="ml-3 text-blue-600 hover:text-blue-800 text-sm font-medium"
-                      >
-                        Preview
-                      </button>
-                      <button
-                        onClick={() =>
-                          handleDeleteFile(file.gridFsId, file.namaFile)
-                        }
-                        className="ml-3 text-red-600 hover:text-red-800 text-sm font-medium"
-                      >
-                        <TrashIcon className="h-5 w-5" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-gray-600">
-                  Belum ada dokumen yang diupload untuk konsultasi ini.
-                </p>
-              )}
-            </div>
+            {/* File Upload Section (Update:Sudah dihapus dalam update fitur 25/9/2025) */}
 
             {/* Tombol Save */}
             <div className="flex justify-end mt-6">
@@ -1189,163 +1063,9 @@ const PatientConsultationDetail = () => {
         </motion.div>
       </div>
 
-      {/* Upload File Modal */}
-      <Dialog
-        open={isUploadModalOpen}
-        onClose={closeUploadModal}
-        className="relative z-50"
-      >
-        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-        <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <Dialog.Title className="text-xl font-bold text-gray-900 mb-4">
-              Upload Dokumen PDF
-            </Dialog.Title>
-            <div className="space-y-4">
-              <div>
-                <label
-                  htmlFor="file-upload"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Pilih File (PDF, max 2MB)
-                </label>
-                <input
-                  id="file-upload"
-                  type="file"
-                  accept="application/pdf"
-                  onChange={handleFileChange}
-                  className="mt-1 block w-full text-sm text-gray-500
-                    file:mr-4 file:py-2 file:px-4
-                    file:rounded-md file:border-0
-                    file:text-sm file:font-semibold
-                    file:bg-blue-50 file:text-blue-700
-                    hover:file:bg-blue-100"
-                />
-                {selectedFile && (
-                  <p className="mt-2 text-sm text-gray-600">
-                    Terpilih: {selectedFile.name}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label
-                  htmlFor="fileType"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Jenis File
-                </label>
-                <Select
-                  id="fileType"
-                  name="fileType"
-                  options={[
-                    { value: "laboratorium", label: "Hasil Laboratorium" },
-                    { value: "resep", label: "Resep Obat" },
-                  ]}
-                  onChange={(selected) =>
-                    setFileType(selected ? selected.value : "")
-                  }
-                  value={
-                    fileType
-                      ? {
-                          value: fileType,
-                          label:
-                            fileType === "laboratorium"
-                              ? "Hasil Laboratorium"
-                              : "Resep Obat",
-                        }
-                      : null
-                  }
-                  className="mt-1 block w-full"
-                  classNamePrefix="react-select"
-                  placeholder="Pilih Jenis File"
-                  isClearable
-                  required
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="petugasUpload"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Petugas Pengunggah
-                </label>
-                <Select
-                  id="petugasUpload"
-                  name="petugasUpload"
-                  options={petugasOptions}
-                  onChange={(selected) =>
-                    setPetugasUpload(selected ? selected.value : "")
-                  }
-                  value={
-                    petugasOptions.find((opt) => opt.value === petugasUpload) ||
-                    null
-                  }
-                  className="mt-1 block w-full"
-                  classNamePrefix="react-select"
-                  placeholder="Pilih Petugas"
-                  isClearable
-                  required
-                />
-              </div>
-            </div>
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                onClick={closeUploadModal}
-                className="inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleUploadFile}
-                className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                disabled={
-                  fileUploadLoading ||
-                  !selectedFile ||
-                  !fileType ||
-                  !petugasUpload
-                }
-              >
-                {fileUploadLoading ? "Mengupload..." : "Upload"}
-              </button>
-            </div>
-          </Dialog.Panel>
-        </div>
-      </Dialog>
+      {/* Upload File Modal (Update:Sudah dihapus dalam update fitur 25/9/2025) */}
 
-      {/* Preview File Modal */}
-      <Dialog
-        open={isPreviewModalOpen}
-        onClose={closePreviewModal}
-        className="relative z-50"
-      >
-        <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
-        <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="w-full max-w-5xl h-[90vh] rounded-lg bg-white p-6 shadow-xl flex flex-col">
-            <Dialog.Title className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">
-              Preview Dokumen PDF
-            </Dialog.Title>
-            <div className="flex-grow overflow-hidden flex justify-center items-center bg-gray-100 rounded-md">
-              {previewFileUrl ? (
-                <iframe
-                  src={previewFileUrl}
-                  className="w-full h-full border-none"
-                  title="PDF Preview"
-                ></iframe>
-              ) : (
-                <p className="text-gray-500">Tidak ada file untuk dipreview.</p>
-              )}
-            </div>
-            <div className="mt-4 flex justify-end">
-              <button
-                onClick={closePreviewModal}
-                className="inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
-              >
-                Tutup
-              </button>
-            </div>
-          </Dialog.Panel>
-        </div>
-      </Dialog>
+      {/* Preview File Modal (Update:Sudah dihapus dalam update fitur 25/9/2025) */}
 
       {/* Edit Patient Modal */}
       <Dialog
@@ -1585,19 +1305,19 @@ const PatientConsultationDetail = () => {
                 </div>
                 <div>
                   <label
-                    htmlFor="editUmur"
+                    htmlFor="editTanggalLahir"
                     className="block text-sm font-medium text-gray-700"
                   >
-                    Umur
+                    Tanggal Lahir
                   </label>
                   <input
-                    type="number"
-                    id="editUmur"
-                    name="umur"
-                    value={editPatientForm.umur || ""}
+                    type="date"
+                    id="editTanggalLahir"
+                    name="tanggalLahir"
+                    value={editPatientForm.tanggalLahir || ""}
                     onChange={handleEditPatientChange}
                     className={`mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                      editPatientErrors.umur
+                      editPatientErrors.tanggalLahir
                         ? "border-red-500"
                         : "border-gray-300"
                     }`}
@@ -1605,9 +1325,9 @@ const PatientConsultationDetail = () => {
                     max="150"
                     required
                   />
-                  {editPatientErrors.umur && (
+                  {editPatientErrors.tanggalLahir && (
                     <p className="mt-1 text-sm text-red-500">
-                      {editPatientErrors.umur}
+                      {editPatientErrors.tanggalLahir}
                     </p>
                   )}
                 </div>

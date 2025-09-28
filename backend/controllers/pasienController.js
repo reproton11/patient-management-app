@@ -29,11 +29,10 @@ const pasienSchema = Joi.object({
       "any.required": "Jenis kelamin wajib diisi",
       "any.only": "Jenis kelamin tidak valid",
     }),
-  umur: Joi.number().min(0).max(150).required().messages({
-    "any.required": "Umur wajib diisi",
-    "number.base": "Umur harus berupa angka",
-    "number.min": "Umur minimal 0",
-    "number.max": "Umur maksimal 150",
+  tanggalLahir: Joi.date().iso().required().messages({
+    "any.required": "Tanggal lahir wajib diisi",
+    "date.base": "Tanggal lahir tidak valid",
+    "date.iso": "Format tanggal lahir harus YYYY-MM-DD",
   }),
   noHP: Joi.string()
     .pattern(/^[0-9]+$/)
@@ -281,6 +280,8 @@ exports.getSemuaPasien = async (req, res) => {
     tanggalDaftar,
     jenisKelamin,
     petugasPendaftaran,
+    sortBy = "createdAt", // Default sort by createdAt
+    sortOrder = "desc", // Default descending order
   } = req.query;
 
   const query = {};
@@ -305,11 +306,17 @@ exports.getSemuaPasien = async (req, res) => {
     query.petugasPendaftaran = petugasPendaftaran;
   }
 
+  //Konfigurasi sorting
+  const sort = {};
+  //Konversi sortOrder: 'asc' menjadi 1 dan 'desc' menjadi -1
+  const order = sortOrder === "asc" ? 1 : -1;
+  sort[sortBy] = order; // Contoh { nama: 1 } atau { tanggalDaftar: -1 }
+
   try {
     const options = {
       page: parseInt(page, 10),
       limit: parseInt(limit, 10),
-      sort: { createdAt: -1 },
+      sort: sort, //Gunakan objek sort yang sudah dikonfigurasi
     };
 
     const result = await Pasien.paginate(query, options);

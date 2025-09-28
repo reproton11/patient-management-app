@@ -1,19 +1,12 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
-const mongoosePaginate = require('mongoose-paginate-v2');
+const mongoosePaginate = require("mongoose-paginate-v2");
 
 const logAktivitasSchema = new Schema({
   aksi: { type: String, required: true },
   oleh: { type: String, required: true },
   pada: { type: Date, default: Date.now },
   catatan: { type: String },
-});
-
-const fileSchema = new Schema({
-  namaFile: { type: String, required: true },
-  tipe: { type: String, enum: ["laboratorium", "resep"], required: true },
-  gridFsId: { type: mongoose.Schema.Types.ObjectId, required: true },
-  tanggalUpload: { type: Date, default: Date.now },
 });
 
 const konsultasiSchema = new Schema(
@@ -43,7 +36,6 @@ const konsultasiSchema = new Schema(
       P: { type: String, trim: true }, // Plan (rencana tindakan)
     },
     therapy: { type: String, trim: true }, // Resep obat, tindakan medis
-    files: [fileSchema], // Array untuk menyimpan referensi file PDF di GridFS
     petugasKonsultasi: {
       // Dokter atau petugas yang menangani konsultasi
       type: String,

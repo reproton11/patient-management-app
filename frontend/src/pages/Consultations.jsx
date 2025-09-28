@@ -10,6 +10,18 @@ import Select from "react-select"; // Untuk dropdown filter
 import { toast } from "react-toastify";
 import { Dialog } from "@headlessui/react"; // Untuk modal konfirmasi hapus
 
+// Fungsi untuk menghitung umur dari tanggal lahir
+const calculateAge = (dob) => {
+  const birthDate = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+};
+
 const petugasOptions = [
   { value: "", label: "Semua Petugas" },
   { value: "Arif", label: "Arif" },
@@ -39,6 +51,9 @@ const Consultations = () => {
   const [filterGender, setFilterGender] = useState("");
   const [filterPetugas, setFilterPetugas] = useState("");
 
+  const [sortBy, setSortBy] = useState("createdAt"); // Default sort by createdAt
+  const [sortOrder, setSortOrder] = useState("desc"); // Default descending order
+
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [patientToDelete, setPatientToDelete] = useState(null);
   const [petugasPenghapus, setPetugasPenghapus] = useState(""); // Siapa yang menghapus
@@ -52,6 +67,8 @@ const Consultations = () => {
       const params = {
         page,
         limit: ITEMS_PER_PAGE,
+        sortBy,
+        sortOrder,
       };
       if (searchTerm) params.search = searchTerm;
       if (filterDate) params.tanggalDaftar = filterDate; // Format YYYY-MM-DD
@@ -59,13 +76,14 @@ const Consultations = () => {
       if (filterPetugas) params.petugasPendaftaran = filterPetugas;
 
       const res = await api.get("/pasien", { params });
-      setPatients(res.data.pasien);
+      setPatients(res.data.pasien || []);
       setTotalPages(res.data.totalPages);
       setCurrentPage(res.data.currentPage);
     } catch (err) {
       console.error("Error fetching patients:", err);
       setError("Gagal memuat data pasien. Silakan coba lagi.");
       toast.error("Gagal memuat data pasien.");
+      setPatients([]);
     } finally {
       setLoading(false);
     }
@@ -73,7 +91,16 @@ const Consultations = () => {
 
   useEffect(() => {
     fetchPatients();
-  }, [searchTerm, filterDate, filterGender, filterPetugas]); // Refetch saat filter berubah
+  }, [searchTerm, filterDate, filterGender, filterPetugas, sortBy, sortOrder]); // Refetch saat filter berubah
+
+  const handleSort = (column) => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(column);
+      setSortOrder("asc");
+    }
+  };
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -229,28 +256,49 @@ const Consultations = () => {
         </button> */}
       </div>
 
-      {patients.length > 0 ? (
+      {patients && patients.length > 0 ? (
         <div className="overflow-x-auto bg-white rounded-xl shadow-lg border border-gray-200">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
+                  cursor-pointer"
+                  onClick={() => handleSort("noKartu")}
                 >
                   No. Kartu
+                  {sortBy === "noKartu" && (
+                    <span className="ml-2">
+                      {sortOrder === "asc" ? " ▲" : " ▼"}
+                    </span>
+                  )}
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
+                  cursor-pointer"
+                  onClick={() => handleSort("nama")}
                 >
                   Nama Pasien
+                  {sortBy === "nama" && (
+                    <span className="ml-2">
+                      {sortOrder === "asc" ? " ▲" : " ▼"}
+                    </span>
+                  )}
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
+                  cursor-pointer"
+                  onClick={() => handleSort("tanggalLahir")}
                 >
-                  Umur
+                  Tgl. Lahir (Umur)
+                  {sortBy === "tanggalLahir" && (
+                    <span className="ml-2">
+                      {sortOrder === "asc" ? " ▲" : " ▼"}
+                    </span>
+                  )}
                 </th>
                 <th
                   scope="col"
@@ -260,9 +308,16 @@ const Consultations = () => {
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
+                  cursor-pointer"
+                  onClick={() => handleSort("tanggalDaftar")}
                 >
                   Tgl. Daftar
+                  {sortBy === "tanggalDaftar" && (
+                    <span className="ml-2">
+                      {sortOrder === "asc" ? " ▲" : " ▼"}
+                    </span>
+                  )}
                 </th>
                 <th
                   scope="col"
@@ -288,7 +343,18 @@ const Consultations = () => {
                     {patient.nama}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                    {patient.umur} th
+                    {patient.tanggalLahir
+                      ? format(new Date(patient.tanggalLahir), "dd MMM yyyy", {
+                          locale: id,
+                        })
+                      : "-"}
+                    &nbsp;(
+                    <span className="font-bold">
+                      {patient.tanggalLahir
+                        ? calculateAge(patient.tanggalLahir)
+                        : "-"}
+                    </span>
+                    th)
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                     {patient.noHP}
