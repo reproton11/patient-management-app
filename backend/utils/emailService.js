@@ -1,22 +1,38 @@
 // patient-management-app/backend/utils/emailService.js
-// const nodemailer = require('nodemailer'); // <--- Tidak perlu Nodemailer Transporter secara langsung
-const sgMail = require("@sendgrid/mail"); // <--- Gunakan SDK SendGrid
+const sgMail = require("@sendgrid/mail");
+const { format } = require("date-fns"); // Tetap gunakan format dasar date-fns
+const { formatInTimeZone, utcToZonedTime } = require("date-fns-tz"); // <--- TAMBAHKAN INI
+const { id } = require("date-fns/locale"); // Untuk lokal Indonesia
+
+// Zona Waktu Jakarta (WIB)
+const TIME_ZONE_JAKARTA = "Asia/Jakarta";
 
 // Mengambil kredensial email dari environment variables
 const senderEmail = process.env.SENDER_EMAIL; // Alamat email pengirim (harus diverifikasi di SendGrid)
-const sendGridApiKey = process.env.SENDGRID_API_KEY; // <--- API Key SendGrid
+const sendGridApiKey = process.env.SENDGRID_API_KEY; // API Key SendGrid
 const receiverEmail = process.env.RECEIVER_EMAIL;
 
 // Pastikan semua variabel lingkungan penting sudah disetel
 if (!senderEmail || !sendGridApiKey || !receiverEmail) {
   console.error(
-    "ERROR: Email environment variables (SENDER_EMAIL, SENDGRID_API_KEY, RECEIVER_EMAIL) are not fully configured."
+    "ERROR: Email environment variables (SENDER_EMAIL, SENDGRID_API_KEY, RECEIVER_EMAIL) are not fully configured. Skipping email notifications."
   );
-  // Tidak perlu throw error keras, cukup log dan jangan coba kirim email
 }
 
 // Konfigurasi SendGrid API Key
 sgMail.setApiKey(sendGridApiKey);
+
+// Fungsi untuk menghitung umur (kita akan pakai ini untuk konsistensi)
+const calculateAge = (dob) => {
+  const birthDate = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+};
 
 // Fungsi untuk mengirim email notifikasi pasien baru
 const sendNewPatientNotification = async (patientData) => {
@@ -28,6 +44,32 @@ const sendNewPatientNotification = async (patientData) => {
   }
 
   try {
+    // --- Konversi dan Format Tanggal ke Zona Waktu Jakarta ---
+    const tglLahir = patientData.tanggalLahir
+      ? new Date(patientData.tanggalLahir)
+      : null;
+    const tglDaftar = patientData.tanggalDaftar
+      ? new Date(patientData.tanggalDaftar)
+      : null;
+
+    const formattedTanggalLahir =
+      tglLahir && !isNaN(tglLahir)
+        ? formatInTimeZone(tglLahir, TIME_ZONE_JAKARTA, "dd MMMM yyyy", {
+            locale: id,
+          })
+        : "-";
+
+    const formattedTanggalDaftar =
+      tglDaftar && !isNaN(tglDaftar)
+        ? formatInTimeZone(
+            tglDaftar,
+            TIME_ZONE_JAKARTA,
+            "dd MMMM yyyy, HH:mm:ss",
+            { locale: id }
+          ) + " WIB"
+        : "-";
+    // -----------------------------------------------------
+
     const msg = {
       to: receiverEmail,
       from: {
@@ -43,22 +85,15 @@ const sendNewPatientNotification = async (patientData) => {
           <ul style="list-style-type: none; padding: 0;">
             <li><strong>No. Kartu:</strong> ${patientData.noKartu}</li>
             <li><strong>Nama:</strong> ${patientData.nama}</li>
-            <li><strong>Tanggal Lahir:</strong> ${
-              patientData.tanggalLahir
-                ? new Date(patientData.tanggalLahir).toLocaleDateString("id-ID")
-                : "-"
-            }</li>
+            <li><strong>Tanggal Lahir:</strong> ${formattedTanggalLahir}</li>
             <li><strong>Umur:</strong> ${
               patientData.tanggalLahir
-                ? new Date().getFullYear() -
-                  new Date(patientData.tanggalLahir).getFullYear()
+                ? calculateAge(patientData.tanggalLahir)
                 : "-"
             } tahun</li>
             <li><strong>Jenis Kelamin:</strong> ${patientData.jenisKelamin}</li>
             <li><strong>No. HP:</strong> ${patientData.noHP}</li>
-            <li><strong>Tanggal Daftar:</strong> ${new Date(
-              patientData.tanggalDaftar
-            ).toLocaleString("id-ID")}</li>
+            <li><strong>Tanggal Daftar:</strong> ${formattedTanggalDaftar}</li>
             <li><strong>Petugas Pendaftaran:</strong> ${
               patientData.petugasPendaftaran
             }</li>
