@@ -2,6 +2,7 @@
 const Pasien = require("../models/Pasien");
 const Konsultasi = require("../models/Konsultasi");
 const Joi = require("@hapi/joi");
+const { sendNewPatientNotification } = require("../utils/emailService");
 
 // Schema validasi Joi untuk pendaftaran pasien
 const pasienSchema = Joi.object({
@@ -256,6 +257,18 @@ exports.daftarPasien = async (req, res) => {
       petugasKonsultasi: petugasPendaftaran,
     });
     await newKonsultasi.save();
+
+    // <--- TAMBAHKAN LOGIKA PENGIRIMAN EMAIL DI SINI ---
+    // Panggil fungsi pengiriman email (asynchronous, jadi jangan block)
+    sendNewPatientNotification(pasien)
+      .then(() => console.log("Email notification for new patient triggered."))
+      .catch((err) =>
+        console.error(
+          "Failed to trigger email notification for new patient:",
+          err
+        )
+      );
+    // --------------------------------------------------
 
     res.status(201).json({ message: "Pendaftaran pasien berhasil", pasien });
   } catch (err) {
