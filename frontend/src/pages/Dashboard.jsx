@@ -5,6 +5,7 @@ import api from "../services/api"; // Pastikan ini ada
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { toast } from "react-toastify";
+import { Link } from "react-router-dom";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({ today: 0, week: 0, month: 0 });
@@ -116,16 +117,27 @@ const Dashboard = () => {
               {newPatientsToday.map((patient) => (
                 <li
                   key={patient._id}
-                  className="flex items-center p-3 bg-blue-50 rounded-lg text-blue-800"
+                  className="flex items-center p-3 bg-blue-50 rounded-lg text-blue-800 hover:bg-blue-100 transition duration-200 cursor-pointer"
                 >
-                  <span className="font-medium mr-2">{patient.nama}</span> -{" "}
-                  {patient.noKartu}
-                  <span className="ml-auto text-sm text-blue-600">
-                    {format(new Date(patient.tanggalDaftar), "HH:mm", {
-                      locale: id,
-                    })}{" "}
-                    WIB
-                  </span>
+                  {" "}
+                  {/* <--- Tambahkan gaya hover dan cursor */}
+                  {/* Gunakan Link untuk navigasi */}
+                  <Link
+                    to={`/consultations/${patient._id}`}
+                    className="flex items-center flex-1"
+                  >
+                    {" "}
+                    {/* <--- UBAH KE LINK */}
+                    <span className="font-medium mr-2">
+                      {patient.nama}
+                    </span> - {patient.noKartu}
+                    <span className="ml-auto text-sm text-blue-600">
+                      {format(new Date(patient.tanggalDaftar), "HH:mm", {
+                        locale: id,
+                      })}{" "}
+                      WIB
+                    </span>
+                  </Link>
                 </li>
               ))}
             </ul>
