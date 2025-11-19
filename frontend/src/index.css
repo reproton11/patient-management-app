@@ -1,5 +1,6 @@
 /* patient-management-app/frontend/src/index.css */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap");
+/* Pastikan Anda menyertakan semua ketebalan (weights) yang Anda butuhkan */
 
 @tailwind base;
 @tailwind components;
@@ -26,8 +27,18 @@
 }
 
 body {
-  font-family: "Inter", "Poppins", sans-serif;
+  font-family: "Inter", "sans-serif"; /* <--- UBAH INI */
   @apply bg-gray-50 text-gray-800;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  /* <--- TAMBAHKAN INI */
+  font-family: "Poppins", "sans-serif";
 }
 
 /* Global Print Styles (ini tetap berlaku untuk browser print) */
