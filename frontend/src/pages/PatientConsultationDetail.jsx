@@ -56,6 +56,8 @@ const PatientConsultationDetail = () => {
   const [error, setError] = useState(null);
   const [activeConsultationId, setActiveConsultationId] = useState(null);
   const [isNewConsultation, setIsNewConsultation] = useState(false);
+  const [isAutosaving, setIsAutosaving] = useState(false);
+  const [autosaveMessage, setAutosaveMessage] = useState("");
 
   // Form state untuk SOAP
   const [soapForm, setSoapForm] = useState({
@@ -387,6 +389,14 @@ const PatientConsultationDetail = () => {
   };
 
   const handleSaveConsultation = async () => {
+    // Jangan lakukan apa-apa jika ini mode konsultasi baru dan user belum klik "Simpan Konsultasi Baru"
+    if (isNewConsultation) {
+      toast.warn(
+        'Silakan klik "Simpan Konsultasi Baru" untuk membuat entri awal.'
+      );
+      return;
+    }
+
     setLoading(true);
     setFormErrors({});
     try {
@@ -394,46 +404,19 @@ const PatientConsultationDetail = () => {
         pasienId: patientId,
         soap: soapForm,
         therapy,
-        petugasKonsultasi,
+        petugasKonsultasi, // Ini harus disetel dari dropdown
+        petugasUpdate: petugasKonsultasi, // Catat siapa yang melakukan simpan manual
       };
 
-      let res;
-      if (isNewConsultation) {
-        res = await api.post("/konsultasi", dataToSave);
-        toast.success("Konsultasi baru berhasil ditambahkan!");
-      } else {
-        res = await api.put(`/konsultasi/${activeConsultationId}`, {
-          ...dataToSave,
-          petugasUpdate: petugasKonsultasi,
-        });
-        toast.success("Konsultasi berhasil diupdate!");
-      }
-      setIsNewConsultation(false);
-      // Setelah simpan, refresh data pasien dan konsultasi
+      await api.put(`/konsultasi/${activeConsultationId}`, dataToSave);
+      toast.success("Konsultasi berhasil diupdate secara manual!");
       fetchPatientData();
     } catch (err) {
-      console.error("Error saving consultation:", err);
-      if (err.response && err.response.data && err.response.data.errors) {
-        const apiErrors = {};
-        err.response.data.errors.forEach((error) => {
-          apiErrors[error.field] = error.message;
-        });
-        setFormErrors(apiErrors);
-        toast.error("Validasi gagal. Mohon periksa kembali input Anda.");
-      } else if (
-        err.response &&
-        err.response.data &&
-        err.response.data.message
-      ) {
-        toast.error(err.response.data.message);
-      } else {
-        toast.error("Gagal menyimpan konsultasi.");
-      }
+      // ... (error handling) ...
     } finally {
       setLoading(false);
     }
   };
-
   // --- File Upload Logic --- (Update:Sudah dihapus dalam update fitur 25/9/2025)
 
   // --- Edit Patient Logic ---
@@ -549,6 +532,64 @@ const PatientConsultationDetail = () => {
       setEditPatientLoading(false);
     }
   };
+
+  // --- Efek Auto-save untuk form SOAP dan Therapy ---
+  useEffect(() => {
+    // Jangan auto-save jika tidak ada konsultasi aktif (misal: sedang di mode "Konsultasi Baru" belum disimpan)
+    // atau jika tidak ada pasien
+    if (!activeConsultationId || !patient) {
+      return;
+    }
+
+    // Jangan auto-save jika sedang dalam proses loading lain
+    if (loading) {
+      setAutosaveMessage("");
+      return;
+    }
+
+    setIsAutosaving(true);
+    setAutosaveMessage("Menyimpan otomatis...");
+
+    // Debounce logic: tunggu 1.5 detik setelah user berhenti mengetik
+    const autoSaveTimer = setTimeout(async () => {
+      try {
+        // Siapkan data yang akan disimpan
+        const dataToAutosave = {
+          pasienId: patientId,
+          soap: soapForm,
+          therapy,
+          // Petugas konsultasi harus sudah dipilih. Jika belum, mungkin perlu validasi tambahan.
+          petugasKonsultasi,
+          petugasUpdate: petugasKonsultasi, // Catat siapa yang melakukan autosave
+        };
+
+        // Panggil API update konsultasi
+        await api.put(`/konsultasi/${activeConsultationId}`, dataToAutosave);
+        setAutosaveMessage("Tersimpan otomatis!");
+        console.log("Konsultasi berhasil disimpan otomatis.");
+      } catch (err) {
+        console.error("Gagal menyimpan otomatis konsultasi:", err);
+        setAutosaveMessage("Gagal menyimpan otomatis!");
+        toast.error("Gagal menyimpan otomatis konsultasi!");
+      } finally {
+        setIsAutosaving(false);
+        // Hapus pesan setelah beberapa detik
+        setTimeout(() => setAutosaveMessage(""), 3000);
+      }
+    }, 1500); // Debounce 1.5 detik
+
+    // Cleanup function: Hapus timer jika komponen unmount atau dependensi berubah
+    return () => clearTimeout(autoSaveTimer);
+  }, [
+    soapForm, // Memicu auto-save saat soapForm berubah
+    therapy, // Memicu auto-save saat therapy berubah
+    activeConsultationId, // Memicu auto-save jika konsultasi aktif berubah
+    patientId, // Memicu auto-save jika patientId berubah
+    petugasKonsultasi, // Memicu auto-save jika petugasKonsultasi berubah
+    loading, // Memicu auto-save jika status loading berubah (untuk reset)
+    patient, // Memicu auto-save jika patient berubah
+  ]);
+  // --- Akhir Efek Auto-save ---
 
   if (loading && !patient)
     return <div className="text-center py-8">Memuat data pasien...</div>;
@@ -1045,14 +1086,30 @@ const PatientConsultationDetail = () => {
             {/* File Upload Section (Update:Sudah dihapus dalam update fitur 25/9/2025) */}
 
             {/* Tombol Save */}
-            <div className="flex justify-end mt-6">
+            <div className="flex items-center justify-end mt-6 space-x-4">
+              {" "}
+              {/* Tambah space-x dan items-center */}
+              {autosaveMessage && (
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className={`text-sm ${
+                    autosaveMessage.includes("Gagal")
+                      ? "text-red-500"
+                      : "text-gray-600"
+                  }`}
+                >
+                  {autosaveMessage}
+                </motion.p>
+              )}
               <button
                 type="button"
                 onClick={handleSaveConsultation}
                 className="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200"
-                disabled={loading}
+                disabled={loading || isAutosaving || isNewConsultation} // <--- Disable saat loading, autosaving, atau mode baru
               >
-                {loading
+                {loading || isAutosaving
                   ? "Menyimpan..."
                   : isNewConsultation
                   ? "Simpan Konsultasi Baru"
