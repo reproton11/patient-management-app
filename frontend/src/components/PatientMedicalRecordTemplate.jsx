@@ -26,7 +26,7 @@ const PatientMedicalRecordTemplate = React.forwardRef(
         ref={ref}
         className="p-8 bg-white text-gray-800 print-content-area"
         style={{
-          fontFamily: "sans-serif",
+          fontFamily: "var(--Google Sans, sans-serif)",
           lineHeight: 1.6,
           fontSize: "12px",
           width: "210mm",
