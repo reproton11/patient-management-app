@@ -131,7 +131,7 @@ const PatientConsultationDetail = () => {
         tensi: patientData.tensi || { sistolik: "", diastolik: "" },
         tinggiBadan: patientData.tinggiBadan || "",
         beratBadan: patientData.beratBadan || "",
-        tambahan: "Data awal dari pendaftaran",
+        tambahan: "N ",
       },
       A: "",
       P: "",
@@ -1075,7 +1075,7 @@ const PatientConsultationDetail = () => {
       >
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4 overflow-y-auto">
-          <Dialog.Panel className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl my-8">
+          <Dialog.Panel className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl my-8 font-sans">
             <Dialog.Title className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">
               Edit Data Pasien
             </Dialog.Title>

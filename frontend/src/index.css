@@ -25,9 +25,9 @@
 }
 
 body {
-  font-family: "Inter", "Poppins", sans-serif;
+  font-family: "Google Sans", "sans-serif";
   @apply bg-gray-50 text-gray-800;
-}
+} 
 
 /* Global Print Styles (ini tetap berlaku untuk browser print) */
 @media print {

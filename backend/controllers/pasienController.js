@@ -251,7 +251,7 @@ exports.daftarPasien = async (req, res) => {
           tensi: pasien.tensi,
           tinggiBadan: pasien.tinggiBadan,
           beratBadan: pasien.beratBadan,
-          tambahan: "Data awal dari pendaftaran",
+          tambahan: "N ",
         },
       },
       petugasKonsultasi: petugasPendaftaran,
