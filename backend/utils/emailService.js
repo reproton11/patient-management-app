@@ -1,11 +1,9 @@
 // patient-management-app/backend/utils/emailService.js
 const sgMail = require("@sendgrid/mail");
-const { format } = require("date-fns"); // Tetap gunakan format dasar date-fns
-const { formatInTimeZone, utcToZonedTime } = require("date-fns-tz"); // <--- TAMBAHKAN INI
-const { id } = require("date-fns/locale"); // Untuk lokal Indonesia
-
-// Zona Waktu Jakarta (WIB)
-const TIME_ZONE_JAKARTA = "Asia/Jakarta";
+const { format } = require("date-fns");
+const { formatInTimeZone, utcToZonedTime } = require("date-fns-tz");
+const { id } = require("date-fns/locale");
+const { TIME_ZONE_JAKARTA, EMAIL_CONFIG } = require("../constants");
 
 // Mengambil kredensial email dari environment variables
 const senderEmail = process.env.SENDER_EMAIL; // Alamat email pengirim (harus diverifikasi di SendGrid)
@@ -73,7 +71,7 @@ const sendNewPatientNotification = async (patientData) => {
     const msg = {
       to: receiverEmail,
       from: {
-        name: "Klinik AZ",
+        name: EMAIL_CONFIG.senderName,
         email: senderEmail,
       },
       subject: `NOTIFIKASI: Pasien Terdaftar di Klinik AZ - ${patientData.nama}`,
