@@ -3,6 +3,12 @@ const Pasien = require("../models/Pasien");
 const Konsultasi = require("../models/Konsultasi");
 const Joi = require("@hapi/joi");
 const { sendNewPatientNotification } = require("../utils/emailService");
+const {
+  VALID_PETUGAS,
+  START_ANGKA_MAP,
+  LETTER_GROUPS_MAP,
+  VALIDATION_CONFIG,
+} = require("../constants");
 
 // Schema validasi Joi untuk pendaftaran pasien
 const pasienSchema = Joi.object({
@@ -37,23 +43,33 @@ const pasienSchema = Joi.object({
   }),
   noHP: Joi.string()
     .pattern(/^[0-9]+$/)
-    .min(10)
-    .max(15)
+    .min(VALIDATION_CONFIG.NO_HP_MIN_LENGTH)
+    .max(VALIDATION_CONFIG.NO_HP_MAX_LENGTH)
     .required()
     .messages({
       "string.pattern.base": "No. HP hanya boleh angka",
-      "string.min": "No. HP minimal 10 digit",
-      "string.max": "No. HP maksimal 15 digit",
+      "string.min": `No. HP minimal ${VALIDATION_CONFIG.NO_HP_MIN_LENGTH} digit`,
+      "string.max": `No. HP maksimal ${VALIDATION_CONFIG.NO_HP_MAX_LENGTH} digit`,
       "any.required": "No. HP wajib diisi",
     }),
   tensi: Joi.object({
-    sistolik: Joi.number().min(60).max(200),
-    diastolik: Joi.number().min(40).max(120),
+    sistolik: Joi.number()
+      .min(VALIDATION_CONFIG.TENSISISTOLIK_MIN)
+      .max(VALIDATION_CONFIG.TENSISISTOLIK_MAX),
+    diastolik: Joi.number()
+      .min(VALIDATION_CONFIG.TENSIDIASTOLIK_MIN)
+      .max(VALIDATION_CONFIG.TENSIDIASTOLIK_MAX),
   }).optional(),
-  tinggiBadan: Joi.number().min(50).max(250).optional(),
-  beratBadan: Joi.number().min(10).max(300).optional(),
+  tinggiBadan: Joi.number()
+    .min(VALIDATION_CONFIG.TINGGI_BADAN_MIN)
+    .max(VALIDATION_CONFIG.TINGGI_BADAN_MAX)
+    .optional(),
+  beratBadan: Joi.number()
+    .min(VALIDATION_CONFIG.BERAT_BADAN_MIN)
+    .max(VALIDATION_CONFIG.BERAT_BADAN_MAX)
+    .optional(),
   petugasPendaftaran: Joi.string()
-    .valid("Arif", "Rani", "Nunung", "Heni", "Maria", "Emy", "Fadil", "Rayhan")
+    .valid(...VALID_PETUGAS)
     .required()
     .messages({
       "any.required": "Petugas pendaftaran wajib diisi",
@@ -61,78 +77,26 @@ const pasienSchema = Joi.object({
     }),
 });
 
-// === MAP ANGKA AWAL UNTUK SETIAP HURUF / GRUP HURUF ===
-const startAngkaMap = {
-  S: 14335,
-  A: 13906,
-  E: 6033,
-  C_G_GROUP: 699, // Angka awal untuk grup C dan G
-  D: 8908,
-  Z: 2128,
-  W: 1909,
-  T: 2438,
-  U: 1583,
-  K: 2180,
-  B: 2285,
-  I: 2899,
-  L: 2263,
-  O: 607,
-  P: 2095,
-  R: 9043,
-  J: 8944,
-  F: 2248,
-  M: 9120,
-  H: 10502,
-  N: 8000,
-  DEFAULT: 0,
-};
-
-// === MAP UNTUK MENENTUKAN GRUP HURUF AWAL ===
-const letterGroupsMap = {
-  C: "C_G_GROUP",
-  G: "C_G_GROUP",
-  S: "S",
-  A: "A",
-  E: "E",
-  D: "D",
-  Z: "Z",
-  W: "W",
-  T: "T",
-  U: "U",
-  K: "K",
-  B: "B",
-  I: "I",
-  L: "L",
-  O: "O",
-  P: "P",
-  R: "R",
-  J: "J",
-  F: "F",
-  M: "M",
-  H: "H",
-  N: "N",
-};
-
 // Helper untuk generate No. Kartu
 const generateNoKartu = async (nama) => {
   const hurufAwalInput = nama.charAt(0).toUpperCase();
 
   // Tentukan nama grup untuk huruf awal ini
-  const groupKey = letterGroupsMap[hurufAwalInput] || hurufAwalInput;
+  const groupKey = LETTER_GROUPS_MAP[hurufAwalInput] || hurufAwalInput;
 
   // Ambil base angka dari map berdasarkan groupKey
   const baseAngka =
-    startAngkaMap[groupKey] !== undefined
-      ? startAngkaMap[groupKey]
-      : startAngkaMap["DEFAULT"];
+    START_ANGKA_MAP[groupKey] !== undefined
+      ? START_ANGKA_MAP[groupKey]
+      : START_ANGKA_MAP["DEFAULT"];
 
   // Buat regex untuk mencari semua nomor kartu yang termasuk dalam grup ini
   let regexPattern;
   if (groupKey === "C_G_GROUP") {
     regexPattern = new RegExp(`^[CG]-\\d{5}$`);
   } else {
-    // Jika huruf awal tidak ada di letterGroupsMap, kita asumsikan itu adalah grupnya sendiri
-    // Dan baseAngka akan berasal dari startAngkaMap[hurufAwalInput] atau DEFAULT
+    // Jika huruf awal tidak ada di LETTER_GROUPS_MAP, kita asumsikan itu adalah grupnya sendiri
+    // Dan baseAngka akan berasal dari START_ANGKA_MAP[hurufAwalInput] atau DEFAULT
     regexPattern = new RegExp(`^${hurufAwalInput}-\\d{5}$`);
   }
 
@@ -199,7 +163,7 @@ exports.daftarPasien = async (req, res) => {
     let noKartu;
     let isUnique = false;
     let attempts = 0;
-    const MAX_ATTEMPTS = 5;
+    const MAX_ATTEMPTS = VALIDATION_CONFIG.MAX_CARD_GENERATION_ATTEMPTS;
 
     while (!isUnique && attempts < MAX_ATTEMPTS) {
       noKartu = await generateNoKartu(nama);

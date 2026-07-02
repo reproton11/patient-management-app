@@ -2,8 +2,7 @@ const Konsultasi = require("../models/Konsultasi");
 const Pasien = require("../models/Pasien");
 const Joi = require("@hapi/joi");
 const mongoose = require("mongoose");
-// Akan diinisialisasi di uploadController
-const mongoosePaginate = require("mongoose-paginate-v2");
+const { VALID_PETUGAS, VALIDATION_CONFIG } = require("../constants");
 
 // Schema validasi Joi untuk konsultasi
 const konsultasiSchema = Joi.object({
@@ -14,11 +13,27 @@ const konsultasiSchema = Joi.object({
     S: Joi.string().allow("").optional(),
     O: Joi.object({
       tensi: Joi.object({
-        sistolik: Joi.number().min(60).max(200).allow(null).optional(),
-        diastolik: Joi.number().min(40).max(120).allow(null).optional(),
+        sistolik: Joi.number()
+          .min(VALIDATION_CONFIG.TENSISISTOLIK_MIN)
+          .max(VALIDATION_CONFIG.TENSISISTOLIK_MAX)
+          .allow(null)
+          .optional(),
+        diastolik: Joi.number()
+          .min(VALIDATION_CONFIG.TENSIDIASTOLIK_MIN)
+          .max(VALIDATION_CONFIG.TENSIDIASTOLIK_MAX)
+          .allow(null)
+          .optional(),
       }).optional(),
-      tinggiBadan: Joi.number().min(50).max(250).allow(null).optional(),
-      beratBadan: Joi.number().min(10).max(300).allow(null).optional(),
+      tinggiBadan: Joi.number()
+        .min(VALIDATION_CONFIG.TINGGI_BADAN_MIN)
+        .max(VALIDATION_CONFIG.TINGGI_BADAN_MAX)
+        .allow(null)
+        .optional(),
+      beratBadan: Joi.number()
+        .min(VALIDATION_CONFIG.BERAT_BADAN_MIN)
+        .max(VALIDATION_CONFIG.BERAT_BADAN_MAX)
+        .allow(null)
+        .optional(),
       tambahan: Joi.string().allow("").optional(),
     }).optional(),
     A: Joi.string().allow("").optional(),
@@ -26,7 +41,7 @@ const konsultasiSchema = Joi.object({
   }).required(),
   therapy: Joi.string().allow("").optional(),
   petugasKonsultasi: Joi.string()
-    .valid("Arif", "Rani", "Nunung", "Heni", "Maria", "Emy", "Fadil", "Rayhan")
+    .valid(...VALID_PETUGAS)
     .required()
     .messages({
       "any.required": "Petugas konsultasi wajib diisi",
