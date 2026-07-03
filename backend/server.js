@@ -57,13 +57,15 @@ mongoose
 // Mengimpor modul rute yang telah kita buat (Update:Sudah dihapus dalam update fitur 25/9/2025)
 const pasienRoutes = require("./routes/pasienRoutes");
 const konsultasiRoutes = require("./routes/konsultasiRoutes");
+const analyticsRoutes = require("./routes/analyticsRoutes");
 
 // Menggunakan modul rute dengan prefix API
 // Semua rute di pasienRoutes akan diakses melalui /api/pasien
 app.use("/api/pasien", pasienRoutes);
 // Semua rute di konsultasiRoutes akan diakses melalui /api/konsultasi
 app.use("/api/konsultasi", konsultasiRoutes);
-// Semua rute di uploadRoutes akan diakses melalui /api/upload (Update:Sudah dihapus dalam update fitur 25/9/2025)
+// Semua rute di analyticsRoutes akan diakses melalui /api/analytics
+app.use("/api/analytics", analyticsRoutes);
 
 // Rute dasar untuk Healthcheck Railway (PENTING untuk Railway Healthcheck Path: `/`)
 // Ini merespons dengan status 200 OK secara cepat
