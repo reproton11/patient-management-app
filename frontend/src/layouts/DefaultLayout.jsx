@@ -6,6 +6,7 @@ import {
   HomeIcon,
   UserGroupIcon,
   ClipboardListIcon,
+  ChartBarIcon,
   CogIcon,
 } from "@heroicons/react/outline"; // Untuk ikon
 
@@ -20,6 +21,11 @@ const navItems = [
     name: "Konsultasi Pasien",
     path: "/consultations",
     icon: ClipboardListIcon,
+  },
+  {
+    name: "Analytics & Insight",
+    path: "/analytics",
+    icon: ChartBarIcon,
   },
   // { name: 'Settings', path: '/settings', icon: CogIcon }, // Contoh untuk fitur tambahan
 ];
