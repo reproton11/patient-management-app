@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import RegisterPatient from "./pages/RegisterPatient";
 import Consultations from "./pages/Consultations";
 import PatientConsultationDetail from "./pages/PatientConsultationDetail";
+import Analytics from "./pages/Analytics";
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
             path="consultations/:patientId"
             element={<PatientConsultationDetail />}
           />
+          <Route path="analytics" element={<Analytics />} />
           {/* Tambahkan rute lain di sini */}
           <Route path="*" element={<div>404 - Halaman Tidak Ditemukan</div>} />
         </Route>
