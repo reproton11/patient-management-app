@@ -1,49 +1,25 @@
-```
-# Dependencies
-node_modules/
+# Examples 1:
 
-# Build artifacts
+# Example 2 (Project with artifacts):
+#Compiled and build artifacts
+*.pyc
+__pycache__/
+*.o
+*.obj
 dist/
 build/
-*.js.map
-*.css.map
-
-# Environment variables
+#Dependencies
+.venv/
+venv/
+node_modules/
+#Logs and temp files
+*.log
+*.tmp
+*.swp
+#Environment
 .env
 .env.local
-*.env.*
-
-# Logs
-*.log
-
-# Coverage reports
-coverage/
-htmlcov/
-
-# IDE specific
+.env.*
+#Editors
 .vscode/
 .idea/
-*.swp
-*.swo
-
-# OS generated files
-.DS_Store
-Thumbs.db
-
-# Python cache (if any Python files exist in the project)
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-
-# Compressed files
-*.zip
-*.gz
-*.tar
-*.tgz
-*.bz2
-*.xz
-*.7z
-*.rar
-*.zst
-```
