@@ -2,22 +2,48 @@
 # Dependencies
 node_modules/
 
+# Build artifacts
+dist/
+build/
+*.js.map
+*.css.map
+
 # Environment variables
 .env
 .env.local
 *.env.*
 
-# Editor/IDE files
+# Logs
+*.log
+
+# Coverage reports
+coverage/
+htmlcov/
+
+# IDE specific
 .vscode/
 .idea/
 *.swp
 *.swo
-*.tmp
 
-# Logs
-*.log
+# OS generated files
+.DS_Store
+Thumbs.db
 
-# Build outputs
-dist/
-build/
+# Python cache (if any Python files exist in the project)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Compressed files
+*.zip
+*.gz
+*.tar
+*.tgz
+*.bz2
+*.xz
+*.7z
+*.rar
+*.zst
 ```

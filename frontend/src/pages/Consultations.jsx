@@ -164,16 +164,16 @@ const Consultations = () => {
       transition={{ duration: 0.5 }}
       className="space-y-8"
     >
-      <h1 className="text-4xl font-extrabold text-gray-900 mb-8 border-b pb-4">
+      <h1 className="text-4xl font-extrabold text-glass-primary mb-8 border-b border-white/20 pb-4">
         Konsultasi Pasien
       </h1>
 
       {/* Filter dan Pencarian */}
-      <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 flex flex-wrap gap-4 items-end mb-8">
+      <div className="glass-card p-6   flex flex-wrap gap-4 items-end mb-8">
         <div className="flex-1 min-w-[200px]">
           <label
             htmlFor="search"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-glass-secondary mb-1"
           >
             Cari Pasien
           </label>
@@ -193,7 +193,7 @@ const Consultations = () => {
         <div className="flex-1 min-w-[150px]">
           <label
             htmlFor="filterDate"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-glass-secondary mb-1"
           >
             Tanggal Daftar
           </label>
@@ -212,7 +212,7 @@ const Consultations = () => {
         <div className="flex-1 min-w-[150px]">
           <label
             htmlFor="filterGender"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-glass-secondary mb-1"
           >
             Jenis Kelamin
           </label>
@@ -232,7 +232,7 @@ const Consultations = () => {
         <div className="flex-1 min-w-[150px]">
           <label
             htmlFor="filterPetugas"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-glass-secondary mb-1"
           >
             Petugas Daftar
           </label>
@@ -257,13 +257,13 @@ const Consultations = () => {
       </div>
 
       {patients && patients.length > 0 ? (
-        <div className="overflow-x-auto bg-white rounded-xl shadow-lg border border-gray-200">
+        <div className="overflow-x-auto glass-card  ">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
+                  className="px-6 py-3 text-left text-xs font-medium text-glass-muted uppercase tracking-wider
                   cursor-pointer"
                   onClick={() => handleSort("noKartu")}
                 >
@@ -276,7 +276,7 @@ const Consultations = () => {
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
+                  className="px-6 py-3 text-left text-xs font-medium text-glass-muted uppercase tracking-wider
                   cursor-pointer"
                   onClick={() => handleSort("nama")}
                 >
@@ -289,7 +289,7 @@ const Consultations = () => {
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
+                  className="px-6 py-3 text-left text-xs font-medium text-glass-muted uppercase tracking-wider
                   cursor-pointer"
                   onClick={() => handleSort("tanggalLahir")}
                 >
@@ -302,13 +302,13 @@ const Consultations = () => {
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-glass-muted uppercase tracking-wider"
                 >
                   No. HP
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
+                  className="px-6 py-3 text-left text-xs font-medium text-glass-muted uppercase tracking-wider
                   cursor-pointer"
                   onClick={() => handleSort("tanggalDaftar")}
                 >
@@ -321,13 +321,13 @@ const Consultations = () => {
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-center text-xs font-medium text-glass-muted uppercase tracking-wider"
                 >
                   Aksi
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="glass-card divide-y divide-gray-200">
               {patients.map((patient) => (
                 <motion.tr
                   key={patient._id}
@@ -336,13 +336,13 @@ const Consultations = () => {
                   transition={{ duration: 0.3 }}
                   className="hover:bg-gray-50"
                 >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-glass-primary">
                     {patient.noKartu}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-glass-primary">
                     {patient.nama}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-glass-primary">
                     {patient.tanggalLahir
                       ? format(new Date(patient.tanggalLahir), "dd MMM yyyy", {
                           locale: id,
@@ -356,10 +356,10 @@ const Consultations = () => {
                     </span>
                     th)
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-glass-primary">
                     {patient.noHP}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-glass-primary">
                     {format(
                       new Date(patient.tanggalDaftar),
                       "dd MMMM yyyy, HH:mm",
@@ -386,7 +386,7 @@ const Consultations = () => {
           </table>
         </div>
       ) : (
-        <p className="text-center text-gray-600 p-6 bg-white rounded-xl shadow-lg border border-gray-200">
+        <p className="text-center text-glass-secondary p-6 glass-card  ">
           Tidak ada pasien yang ditemukan.
         </p>
       )}
@@ -401,7 +401,7 @@ const Consultations = () => {
             <button
               onClick={() => fetchPatients(currentPage - 1)}
               disabled={currentPage === 1}
-              className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 glass-card text-sm font-medium text-glass-muted hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
@@ -412,7 +412,7 @@ const Consultations = () => {
                 className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
                   page === currentPage
                     ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                    : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                    : "glass-card border-gray-300 text-glass-secondary hover:bg-gray-50"
                 }`}
               >
                 {page}
@@ -421,7 +421,7 @@ const Consultations = () => {
             <button
               onClick={() => fetchPatients(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 glass-card text-sm font-medium text-glass-muted hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
             </button>
@@ -437,11 +437,11 @@ const Consultations = () => {
       >
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+          <Dialog.Panel className="w-full max-w-md rounded-lg glass-card p-6 shadow-xl">
             <Dialog.Title className="text-xl font-bold text-red-600 mb-4">
               Konfirmasi Penghapusan
             </Dialog.Title>
-            <p className="text-gray-700 mb-4">
+            <p className="text-glass-secondary mb-4">
               Anda yakin ingin menghapus pasien{" "}
               <span className="font-semibold">{patientToDelete?.nama}</span> (
               {patientToDelete?.noKartu})? Semua riwayat konsultasi pasien ini
@@ -450,7 +450,7 @@ const Consultations = () => {
             <div className="mb-4">
               <label
                 htmlFor="petugasPenghapus"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-sm font-medium text-glass-secondary mb-1"
               >
                 Nama Petugas yang Menghapus:
               </label>
@@ -475,7 +475,7 @@ const Consultations = () => {
             <div className="flex justify-end gap-3">
               <button
                 onClick={closeDeleteModal}
-                className="inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
+                className="inline-flex justify-center px-4 py-2 text-sm font-medium text-glass-secondary bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
               >
                 Batal
               </button>

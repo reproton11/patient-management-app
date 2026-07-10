@@ -32,13 +32,13 @@ const navItems = [
 
 const DefaultLayout = () => {
   return (
-    <div className="flex min-h-screen bg-gray-100 font-sans">
+    <div className="flex min-h-screen font-sans">
       {/* Sidebar */}
       <motion.aside
         initial={{ x: -200 }}
         animate={{ x: 0 }}
         transition={{ duration: 0.3 }}
-        className="w-64 bg-white shadow-lg p-6 flex flex-col fixed h-full z-20"
+        className="w-64 glass p-6 flex flex-col fixed h-full z-20"
       >
         <div className="flex items-center justify-center mb-10 mt-4">
           <img
@@ -50,7 +50,7 @@ const DefaultLayout = () => {
               e.target.src = "https://via.placeholder.com/40x40?text=CL";
             }}
           />
-          <h1 className="text-2xl font-bold text-gray-800">Klinik AZ</h1>
+          <h1 className="text-2xl font-bold text-glass-primary">Klinik AZ</h1>
         </div>
         <nav className="flex-grow">
           <ul>
@@ -62,8 +62,8 @@ const DefaultLayout = () => {
                     `flex items-center p-3 rounded-lg text-lg transition-all duration-200
                     ${
                       isActive
-                        ? "bg-blue-600 text-white shadow-md"
-                        : "text-gray-700 hover:bg-gray-200 hover:text-blue-600"
+                        ? "bg-white/30 text-white shadow-md backdrop-blur-md"
+                        : "text-glass-secondary hover:bg-white/20 hover:text-white"
                     }`
                   }
                 >
@@ -74,7 +74,7 @@ const DefaultLayout = () => {
             ))}
           </ul>
         </nav>
-        <div className="text-center text-sm text-gray-500 mt-auto pt-6 border-t border-gray-200">
+        <div className="text-center text-sm text-glass-muted mt-auto pt-6 border-t border-white/20">
           &copy; {new Date().getFullYear()} Klinik AZ. All rights reserved.
         </div>
       </motion.aside>

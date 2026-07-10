@@ -63,18 +63,18 @@ const Analytics = () => {
       transition={{ duration: 0.5 }}
       className="space-y-8"
     >
-      <h1 className="text-4xl font-extrabold text-gray-900 mb-8 border-b pb-4">
+      <h1 className="text-4xl font-extrabold text-glass-primary mb-8 border-b border-white/20 pb-4">
         Analytics & Insight
       </h1>
 
       {/* 1. Total Pasien Terdaftar */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <motion.div
-          className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 text-center"
+          className="glass-card p-6 text-center"
           whileHover={{ scale: 1.02 }}
           transition={{ type: "spring", stiffness: 400, damping: 10 }}
         >
-          <h3 className="text-lg font-medium text-gray-600 mb-2">
+          <h3 className="text-lg font-medium text-glass-secondary mb-2">
             Total Pasien Terdaftar
           </h3>
           <p className="text-5xl font-extrabold text-blue-600">
@@ -84,44 +84,44 @@ const Analytics = () => {
 
         {/* 2. Persentase Pertumbuhan Pasien */}
         <motion.div
-          className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 text-center"
+          className="glass-card p-6 text-center"
           whileHover={{ scale: 1.02 }}
           transition={{ type: "spring", stiffness: 400, damping: 10 }}
         >
-          <h3 className="text-lg font-medium text-gray-600 mb-2">
+          <h3 className="text-lg font-medium text-glass-secondary mb-2">
             Pertumbuhan Pasien (MoM)
           </h3>
           <p
             className={`text-5xl font-extrabold ${
-              analytics.growth.mom >= 0 ? "text-green-600" : "text-red-600"
+              analytics.growth.mom >= 0 ? "text-green-300" : "text-red-300"
             }`}
           >
             {analytics.growth.mom >= 0 ? "+" : ""}
             {analytics.growth.mom}%
           </p>
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-sm text-glass-muted mt-2">
             Bulan ini: {analytics.growth.pasienBulanIni} | Bulan lalu:{" "}
             {analytics.growth.pasienBulanLalu}
           </p>
         </motion.div>
 
         <motion.div
-          className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 text-center"
+          className="glass-card p-6 text-center"
           whileHover={{ scale: 1.02 }}
           transition={{ type: "spring", stiffness: 400, damping: 10 }}
         >
-          <h3 className="text-lg font-medium text-gray-600 mb-2">
+          <h3 className="text-lg font-medium text-glass-secondary mb-2">
             Pertumbuhan Pasien (YoY)
           </h3>
           <p
             className={`text-5xl font-extrabold ${
-              analytics.growth.yoy >= 0 ? "text-green-600" : "text-red-600"
+              analytics.growth.yoy >= 0 ? "text-green-300" : "text-red-300"
             }`}
           >
             {analytics.growth.yoy >= 0 ? "+" : ""}
             {analytics.growth.yoy}%
           </p>
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-sm text-glass-muted mt-2">
             Tahun ini: {analytics.growth.pasienTahunIni} | Tahun lalu:{" "}
             {analytics.growth.pasienTahunLalu}
           </p>
@@ -130,12 +130,12 @@ const Analytics = () => {
 
       {/* 3. Grafik Pendaftaran Pasien - Tren */}
       <motion.div
-        className="bg-white p-6 rounded-xl shadow-lg border border-gray-200"
+        className="glass-card p-6"
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
       >
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b pb-3">
+        <h2 className="text-2xl font-semibold text-glass-primary mb-4 border-b border-white/20 pb-3">
           Tren Pendaftaran Pasien (7 Hari Terakhir)
         </h2>
         <ResponsiveContainer width="100%" height={300}>
@@ -160,12 +160,12 @@ const Analytics = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Jenis Kelamin */}
         <motion.div
-          className="bg-white p-6 rounded-xl shadow-lg border border-gray-200"
+          className="glass-card p-6"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b pb-3">
+          <h2 className="text-2xl font-semibold text-glass-primary mb-4 border-b border-white/20 pb-3">
             Distribusi Jenis Kelamin
           </h2>
           <ResponsiveContainer width="100%" height={300}>
@@ -196,12 +196,12 @@ const Analytics = () => {
 
         {/* Usia */}
         <motion.div
-          className="bg-white p-6 rounded-xl shadow-lg border border-gray-200"
+          className="glass-card p-6"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b pb-3">
+          <h2 className="text-2xl font-semibold text-glass-primary mb-4 border-b border-white/20 pb-3">
             Distribusi Usia
           </h2>
           <ResponsiveContainer width="100%" height={300}>
@@ -218,12 +218,12 @@ const Analytics = () => {
 
         {/* Provinsi */}
         <motion.div
-          className="bg-white p-6 rounded-xl shadow-lg border border-gray-200"
+          className="glass-card p-6"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
         >
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b pb-3">
+          <h2 className="text-2xl font-semibold text-glass-primary mb-4 border-b border-white/20 pb-3">
             Distribusi Provinsi (Top 10)
           </h2>
           <ResponsiveContainer width="100%" height={300}>
@@ -240,12 +240,12 @@ const Analytics = () => {
 
         {/* Kabupaten */}
         <motion.div
-          className="bg-white p-6 rounded-xl shadow-lg border border-gray-200"
+          className="glass-card p-6"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.5 }}
         >
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b pb-3">
+          <h2 className="text-2xl font-semibold text-glass-primary mb-4 border-b border-white/20 pb-3">
             Distribusi Kabupaten (Top 10)
           </h2>
           <ResponsiveContainer width="100%" height={300}>
@@ -263,12 +263,12 @@ const Analytics = () => {
 
       {/* 5. Top 5 Diagnosis Terbanyak */}
       <motion.div
-        className="bg-white p-6 rounded-xl shadow-lg border border-gray-200"
+        className="glass-card p-6"
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5, delay: 0.6 }}
       >
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b pb-3">
+        <h2 className="text-2xl font-semibold text-glass-primary mb-4 border-b border-white/20 pb-3">
           Top 5 Diagnosis Terbanyak
         </h2>
         {analytics.topDiagnoses.length > 0 ? (
@@ -283,23 +283,23 @@ const Analytics = () => {
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <p className="text-gray-600">Belum ada data diagnosis</p>
+          <p className="text-glass-secondary">Belum ada data diagnosis</p>
         )}
       </motion.div>
 
       {/* 6. Rata-rata Tensi, Tinggi Badan, Berat Badan */}
       <motion.div
-        className="bg-white p-6 rounded-xl shadow-lg border border-gray-200"
+        className="glass-card p-6"
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5, delay: 0.7 }}
       >
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b pb-3">
+        <h2 className="text-2xl font-semibold text-glass-primary mb-4 border-b border-white/20 pb-3">
           Rata-rata Vital Stats
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="text-center p-4 bg-blue-50 rounded-lg">
-            <h3 className="text-sm font-medium text-gray-600 mb-2">
+            <h3 className="text-sm font-medium text-glass-secondary mb-2">
               Tensi Sistolik (mmHg)
             </h3>
             <p className="text-3xl font-bold text-blue-600">
@@ -307,15 +307,15 @@ const Analytics = () => {
             </p>
           </div>
           <div className="text-center p-4 bg-green-50 rounded-lg">
-            <h3 className="text-sm font-medium text-gray-600 mb-2">
+            <h3 className="text-sm font-medium text-glass-secondary mb-2">
               Tensi Diastolik (mmHg)
             </h3>
-            <p className="text-3xl font-bold text-green-600">
+            <p className="text-3xl font-bold text-green-300">
               {analytics.vitalStats.avgDiastolik?.toFixed(1) || "N/A"}
             </p>
           </div>
           <div className="text-center p-4 bg-yellow-50 rounded-lg">
-            <h3 className="text-sm font-medium text-gray-600 mb-2">
+            <h3 className="text-sm font-medium text-glass-secondary mb-2">
               Tinggi Badan (cm)
             </h3>
             <p className="text-3xl font-bold text-yellow-600">
@@ -323,10 +323,10 @@ const Analytics = () => {
             </p>
           </div>
           <div className="text-center p-4 bg-red-50 rounded-lg">
-            <h3 className="text-sm font-medium text-gray-600 mb-2">
+            <h3 className="text-sm font-medium text-glass-secondary mb-2">
               Berat Badan (kg)
             </h3>
-            <p className="text-3xl font-bold text-red-600">
+            <p className="text-3xl font-bold text-red-300">
               {analytics.vitalStats.avgBeratBadan?.toFixed(1) || "N/A"}
             </p>
           </div>
@@ -335,17 +335,17 @@ const Analytics = () => {
 
       {/* 7. Retensi Pasien */}
       <motion.div
-        className="bg-white p-6 rounded-xl shadow-lg border border-gray-200"
+        className="glass-card p-6"
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5, delay: 0.8 }}
       >
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b pb-3">
+        <h2 className="text-2xl font-semibold text-glass-primary mb-4 border-b border-white/20 pb-3">
           Retensi Pasien
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="text-center p-4 bg-purple-50 rounded-lg">
-            <h3 className="text-sm font-medium text-gray-600 mb-2">
+            <h3 className="text-sm font-medium text-glass-secondary mb-2">
               Total Pasien Unik
             </h3>
             <p className="text-3xl font-bold text-purple-600">
@@ -353,7 +353,7 @@ const Analytics = () => {
             </p>
           </div>
           <div className="text-center p-4 bg-indigo-50 rounded-lg">
-            <h3 className="text-sm font-medium text-gray-600 mb-2">
+            <h3 className="text-sm font-medium text-glass-secondary mb-2">
               Pasien dengan Konsultasi Berulang
             </h3>
             <p className="text-3xl font-bold text-indigo-600">
@@ -361,7 +361,7 @@ const Analytics = () => {
             </p>
           </div>
           <div className="text-center p-4 bg-pink-50 rounded-lg">
-            <h3 className="text-sm font-medium text-gray-600 mb-2">
+            <h3 className="text-sm font-medium text-glass-secondary mb-2">
               Tingkat Retensi
             </h3>
             <p className="text-3xl font-bold text-pink-600">
@@ -370,7 +370,7 @@ const Analytics = () => {
           </div>
         </div>
         <div className="mt-4 text-center">
-          <p className="text-gray-600">
+          <p className="text-glass-secondary">
             Rata-rata konsultasi per pasien:{" "}
             <span className="font-semibold">
               {analytics.retention.avgConsultationsPerPatient}

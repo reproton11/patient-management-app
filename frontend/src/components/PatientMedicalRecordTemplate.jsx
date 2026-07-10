@@ -24,7 +24,7 @@ const PatientMedicalRecordTemplate = React.forwardRef(
     return (
       <div
         ref={ref}
-        className="p-8 bg-white text-gray-800 print-content-area"
+        className="p-8 bg-white text-gray-700 print-content-area"
         style={{
           fontFamily: "var(--Google Sans, sans-serif)",
           lineHeight: 1.6,
@@ -62,7 +62,7 @@ const PatientMedicalRecordTemplate = React.forwardRef(
               style={{
                 fontSize: "24px",
                 fontWeight: "bold",
-                color: "#1a202c",
+                color: "#333",
                 margin: 0,
               }}
             >
@@ -73,7 +73,7 @@ const PatientMedicalRecordTemplate = React.forwardRef(
             <p
               style={{
                 fontSize: "14px",
-                color: "#4a5568",
+                color: "#555",
                 textAlign: "right",
                 margin: 0,
               }}
@@ -83,7 +83,7 @@ const PatientMedicalRecordTemplate = React.forwardRef(
             <p
               style={{
                 fontSize: "14px",
-                color: "#4a5568",
+                color: "#555",
                 textAlign: "right",
                 margin: 0,
               }}
@@ -93,7 +93,7 @@ const PatientMedicalRecordTemplate = React.forwardRef(
             <p
               style={{
                 fontSize: "14px",
-                color: "#4a5568",
+                color: "#555",
                 textAlign: "right",
                 margin: 0,
               }}
@@ -131,7 +131,7 @@ const PatientMedicalRecordTemplate = React.forwardRef(
           >
             <span
               className="info-label"
-              style={{ fontWeight: "bold", color: "#4a5568" }}
+              style={{ fontWeight: "bold", color: "#555" }}
             >
               No. Kartu:
             </span>
@@ -152,7 +152,7 @@ const PatientMedicalRecordTemplate = React.forwardRef(
           >
             <span
               className="info-label"
-              style={{ fontWeight: "bold", color: "#4a5568" }}
+              style={{ fontWeight: "bold", color: "#555" }}
             >
               Nama:
             </span>
@@ -166,7 +166,7 @@ const PatientMedicalRecordTemplate = React.forwardRef(
           >
             <span
               className="info-label"
-              style={{ fontWeight: "bold", color: "#4a5568" }}
+              style={{ fontWeight: "bold", color: "#555" }}
             >
               Jenis Kelamin:
             </span>
@@ -180,7 +180,7 @@ const PatientMedicalRecordTemplate = React.forwardRef(
           >
             <span
               className="info-label"
-              style={{ fontWeight: "bold", color: "#4a5568" }}
+              style={{ fontWeight: "bold", color: "#555" }}
             >
               Tanggal Lahir:
             </span>
@@ -198,7 +198,7 @@ const PatientMedicalRecordTemplate = React.forwardRef(
           >
             <span
               className="info-label"
-              style={{ fontWeight: "bold", color: "#4a5568" }}
+              style={{ fontWeight: "bold", color: "#555" }}
             >
               Umur:
             </span>
@@ -213,7 +213,7 @@ const PatientMedicalRecordTemplate = React.forwardRef(
           >
             <span
               className="info-label"
-              style={{ fontWeight: "bold", color: "#4a5568" }}
+              style={{ fontWeight: "bold", color: "#555" }}
             >
               No. HP:
             </span>
@@ -227,7 +227,7 @@ const PatientMedicalRecordTemplate = React.forwardRef(
           >
             <span
               className="info-label"
-              style={{ fontWeight: "bold", color: "#4a5568" }}
+              style={{ fontWeight: "bold", color: "#555" }}
             >
               Alamat:
             </span>
@@ -242,7 +242,7 @@ const PatientMedicalRecordTemplate = React.forwardRef(
           >
             <span
               className="info-label"
-              style={{ fontWeight: "bold", color: "#4a5568" }}
+              style={{ fontWeight: "bold", color: "#555" }}
             >
               Tgl. Daftar:
             </span>
@@ -258,7 +258,7 @@ const PatientMedicalRecordTemplate = React.forwardRef(
           >
             <span
               className="info-label"
-              style={{ fontWeight: "bold", color: "#4a5568" }}
+              style={{ fontWeight: "bold", color: "#555" }}
             >
               Terakhir Update:
             </span>
@@ -276,7 +276,7 @@ const PatientMedicalRecordTemplate = React.forwardRef(
           >
             <span
               className="info-label"
-              style={{ fontWeight: "bold", color: "#4a5568" }}
+              style={{ fontWeight: "bold", color: "#555" }}
             >
               Petugas Pendaftaran:
             </span>
@@ -317,7 +317,7 @@ const PatientMedicalRecordTemplate = React.forwardRef(
                   style={{
                     fontSize: "16px",
                     fontWeight: "bold",
-                    color: "#1a202c",
+                    color: "#333",
                     marginBottom: "8px",
                     borderBottom: "1px dotted #e2e8f0",
                     paddingBottom: "5px",
@@ -343,7 +343,7 @@ const PatientMedicalRecordTemplate = React.forwardRef(
                   <p style={{ margin: 0 }}>
                     <span
                       className="info-label"
-                      style={{ fontWeight: "bold", color: "#4a5568" }}
+                      style={{ fontWeight: "bold", color: "#555" }}
                     >
                       S (Subjective):
                     </span>{" "}
@@ -354,7 +354,7 @@ const PatientMedicalRecordTemplate = React.forwardRef(
                   <p style={{ margin: 0 }}>
                     <span
                       className="info-label"
-                      style={{ fontWeight: "bold", color: "#4a5568" }}
+                      style={{ fontWeight: "bold", color: "#555" }}
                     >
                       A (Assessment):
                     </span>{" "}
@@ -365,7 +365,7 @@ const PatientMedicalRecordTemplate = React.forwardRef(
                   <p style={{ margin: 0 }}>
                     <span
                       className="info-label"
-                      style={{ fontWeight: "bold", color: "#4a5568" }}
+                      style={{ fontWeight: "bold", color: "#555" }}
                     >
                       P (Plan):
                     </span>{" "}
@@ -376,7 +376,7 @@ const PatientMedicalRecordTemplate = React.forwardRef(
                   <p style={{ margin: 0 }}>
                     <span
                       className="info-label"
-                      style={{ fontWeight: "bold", color: "#4a5568" }}
+                      style={{ fontWeight: "bold", color: "#555" }}
                     >
                       Therapy:
                     </span>{" "}
@@ -391,7 +391,7 @@ const PatientMedicalRecordTemplate = React.forwardRef(
                     marginTop: "10px",
                     marginBottom: "5px",
                     fontWeight: "bold",
-                    color: "#4a5568",
+                    color: "#555",
                   }}
                 >
                   <span className="info-label">O (Objective):</span>

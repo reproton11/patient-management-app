@@ -568,19 +568,19 @@ const PatientConsultationDetail = () => {
       transition={{ duration: 0.5 }}
       className="space-y-8"
     >
-      <h1 className="text-4xl font-extrabold text-gray-900 mb-8 border-b pb-4">
+      <h1 className="text-4xl font-extrabold text-glass-primary mb-8 border-b border-white/20 pb-4">
         Konsultasi Pasien: {patient.nama}
       </h1>
 
       {/* Patient Info Card */}
       <motion.div
-        className="bg-white p-6 rounded-xl shadow-lg border border-gray-200"
+        className="glass-card p-6  "
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
       >
         <div className="flex justify-between items-center mb-4 no-print">
-          <h2 className="text-2xl font-semibold text-gray-800">
+          <h2 className="text-2xl font-semibold text-glass-primary">
             Detail Pasien
           </h2>
           <div className="flex items-center space-x-3">
@@ -606,7 +606,7 @@ const PatientConsultationDetail = () => {
             </button>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-gray-700">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-glass-secondary">
           <div>
             <p className="font-medium">No. Kartu:</p>
             <p className="font-bold text-lg text-blue-600">{patient.noKartu}</p>
@@ -671,12 +671,12 @@ const PatientConsultationDetail = () => {
       {/* Consultations History */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <motion.div
-          className="lg:col-span-1 bg-white p-6 rounded-xl shadow-lg border border-gray-200 no-print h-fit"
+          className="lg:col-span-1 glass-card p-6   no-print h-fit"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b pb-3">
+          <h2 className="text-2xl font-semibold text-glass-primary mb-4 border-b border-white/20 pb-3">
             Riwayat Konsultasi
           </h2>
           <button
@@ -696,7 +696,7 @@ const PatientConsultationDetail = () => {
                       ${
                         activeConsultationId === consultation._id
                           ? "bg-blue-100 border-blue-500 text-blue-800 shadow-md"
-                          : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100 hover:border-blue-300"
+                          : "bg-gray-50 border-gray-200 text-glass-secondary hover:bg-gray-100 hover:border-blue-300"
                       }`}
                   >
                     <p className="font-medium">
@@ -707,7 +707,7 @@ const PatientConsultationDetail = () => {
                         { locale: id }
                       )}
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-glass-secondary">
                       Oleh: {consultation.petugasKonsultasi}
                     </p>
                   </button>
@@ -715,7 +715,7 @@ const PatientConsultationDetail = () => {
               ))}
             </ul>
           ) : (
-            <p className="text-gray-600">Belum ada riwayat konsultasi.</p>
+            <p className="text-glass-secondary">Belum ada riwayat konsultasi.</p>
           )}
           {totalPages > 1 && (
             <div className="flex justify-center mt-4">
@@ -728,7 +728,7 @@ const PatientConsultationDetail = () => {
                     setCurrentPage((prev) => Math.max(1, prev - 1))
                   }
                   disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 glass-card text-sm font-medium text-glass-muted hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Previous
                 </button>
@@ -740,7 +740,7 @@ const PatientConsultationDetail = () => {
                       className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
                         page === currentPage
                           ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                          : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                          : "glass-card border-gray-300 text-glass-secondary hover:bg-gray-50"
                       }`}
                     >
                       {page}
@@ -752,7 +752,7 @@ const PatientConsultationDetail = () => {
                     setCurrentPage((prev) => Math.min(totalPages, prev + 1))
                   }
                   disabled={currentPage === totalPages}
-                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 glass-card text-sm font-medium text-glass-muted hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next
                 </button>
@@ -763,12 +763,12 @@ const PatientConsultationDetail = () => {
 
         {/* SOAP Form & File Upload */}
         <motion.div
-          className="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg border border-gray-200 no-print"
+          className="lg:col-span-2 glass-card p-6   no-print"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b pb-3">
+          <h2 className="text-2xl font-semibold text-glass-primary mb-4 border-b border-white/20 pb-3">
             {isNewConsultation
               ? "Konsultasi Baru"
               : `Detail Konsultasi #${activeConsultation?._id?.slice(-5)}`}
@@ -779,7 +779,7 @@ const PatientConsultationDetail = () => {
             <div>
               <label
                 htmlFor="S"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-glass-secondary"
               >
                 S (Subjective - Keluhan Pasien)
               </label>
@@ -800,14 +800,14 @@ const PatientConsultationDetail = () => {
 
             {/* Objective */}
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-glass-secondary">
                 O (Objective)
               </label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-1">
                 <div>
                   <label
                     htmlFor="tensiSistolikO"
-                    className="block text-xs font-medium text-gray-600"
+                    className="block text-xs font-medium text-glass-secondary"
                   >
                     Tensi (Sistolik)
                   </label>
@@ -833,7 +833,7 @@ const PatientConsultationDetail = () => {
                 <div>
                   <label
                     htmlFor="tensiDiastolikO"
-                    className="block text-xs font-medium text-gray-600"
+                    className="block text-xs font-medium text-glass-secondary"
                   >
                     Tensi (Diastolik)
                   </label>
@@ -859,7 +859,7 @@ const PatientConsultationDetail = () => {
                 <div>
                   <label
                     htmlFor="tinggiBadanO"
-                    className="block text-xs font-medium text-gray-600"
+                    className="block text-xs font-medium text-glass-secondary"
                   >
                     Tinggi Badan (cm)
                   </label>
@@ -885,7 +885,7 @@ const PatientConsultationDetail = () => {
                 <div>
                   <label
                     htmlFor="beratBadanO"
-                    className="block text-xs font-medium text-gray-600"
+                    className="block text-xs font-medium text-glass-secondary"
                   >
                     Berat Badan (kg)
                   </label>
@@ -912,7 +912,7 @@ const PatientConsultationDetail = () => {
               <div className="mt-2">
                 <label
                   htmlFor="tambahanO"
-                  className="block text-xs font-medium text-gray-600"
+                  className="block text-xs font-medium text-glass-secondary"
                 >
                   Tambahan (Observasi Manual)
                 </label>
@@ -940,7 +940,7 @@ const PatientConsultationDetail = () => {
             <div>
               <label
                 htmlFor="A"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-glass-secondary"
               >
                 A (Assessment - Diagnosis Dokter)
               </label>
@@ -963,7 +963,7 @@ const PatientConsultationDetail = () => {
             <div>
               <label
                 htmlFor="P"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-glass-secondary"
               >
                 P (Plan - Rencana Tindakan)
               </label>
@@ -986,7 +986,7 @@ const PatientConsultationDetail = () => {
             <div>
               <label
                 htmlFor="therapy"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-glass-secondary"
               >
                 Therapy (Resep Obat, Tindakan Medis)
               </label>
@@ -1011,7 +1011,7 @@ const PatientConsultationDetail = () => {
             <div>
               <label
                 htmlFor="petugasKonsultasi"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-glass-secondary"
               >
                 Petugas Konsultasi
               </label>
@@ -1075,8 +1075,8 @@ const PatientConsultationDetail = () => {
       >
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4 overflow-y-auto">
-          <Dialog.Panel className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl my-8 font-sans">
-            <Dialog.Title className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">
+          <Dialog.Panel className="w-full max-w-2xl rounded-lg glass-card p-6 shadow-xl my-8 font-sans">
+            <Dialog.Title className="text-xl font-bold text-glass-primary mb-4 border-b pb-2">
               Edit Data Pasien
             </Dialog.Title>
             <form
@@ -1090,7 +1090,7 @@ const PatientConsultationDetail = () => {
               <div>
                 <label
                   htmlFor="editNama"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-glass-secondary"
                 >
                   Nama Lengkap
                 </label>
@@ -1121,7 +1121,7 @@ const PatientConsultationDetail = () => {
                 <div>
                   <label
                     htmlFor="editProvinsi"
-                    className="block text-sm font-medium text-gray-700"
+                    className="block text-sm font-medium text-glass-secondary"
                   >
                     Provinsi
                   </label>
@@ -1155,7 +1155,7 @@ const PatientConsultationDetail = () => {
                 <div>
                   <label
                     htmlFor="editKabupaten"
-                    className="block text-sm font-medium text-gray-700"
+                    className="block text-sm font-medium text-glass-secondary"
                   >
                     Kabupaten/Kota
                   </label>
@@ -1191,7 +1191,7 @@ const PatientConsultationDetail = () => {
                 <div>
                   <label
                     htmlFor="editKecamatan"
-                    className="block text-sm font-medium text-gray-700"
+                    className="block text-sm font-medium text-glass-secondary"
                   >
                     Kecamatan
                   </label>
@@ -1227,7 +1227,7 @@ const PatientConsultationDetail = () => {
                 <div>
                   <label
                     htmlFor="editKelurahan"
-                    className="block text-sm font-medium text-gray-700"
+                    className="block text-sm font-medium text-glass-secondary"
                   >
                     Kelurahan/Desa
                   </label>
@@ -1267,7 +1267,7 @@ const PatientConsultationDetail = () => {
                 <div>
                   <label
                     htmlFor="editJenisKelamin"
-                    className="block text-sm font-medium text-gray-700"
+                    className="block text-sm font-medium text-glass-secondary"
                   >
                     Jenis Kelamin
                   </label>
@@ -1306,7 +1306,7 @@ const PatientConsultationDetail = () => {
                 <div>
                   <label
                     htmlFor="editTanggalLahir"
-                    className="block text-sm font-medium text-gray-700"
+                    className="block text-sm font-medium text-glass-secondary"
                   >
                     Tanggal Lahir
                   </label>
@@ -1337,7 +1337,7 @@ const PatientConsultationDetail = () => {
               <div>
                 <label
                   htmlFor="editNoHP"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-glass-secondary"
                 >
                   No. HP
                 </label>
@@ -1370,7 +1370,7 @@ const PatientConsultationDetail = () => {
                 <div>
                   <label
                     htmlFor="editTensiSistolik"
-                    className="block text-sm font-medium text-gray-700"
+                    className="block text-sm font-medium text-glass-secondary"
                   >
                     Tensi (Sistolik)
                   </label>
@@ -1398,7 +1398,7 @@ const PatientConsultationDetail = () => {
                 <div>
                   <label
                     htmlFor="editTensiDiastolik"
-                    className="block text-sm font-medium text-gray-700"
+                    className="block text-sm font-medium text-glass-secondary"
                   >
                     Tensi (Diastolik)
                   </label>
@@ -1426,7 +1426,7 @@ const PatientConsultationDetail = () => {
                 <div>
                   <label
                     htmlFor="editTinggiBadan"
-                    className="block text-sm font-medium text-gray-700"
+                    className="block text-sm font-medium text-glass-secondary"
                   >
                     Tinggi Badan (cm)
                   </label>
@@ -1454,7 +1454,7 @@ const PatientConsultationDetail = () => {
                 <div>
                   <label
                     htmlFor="editBeratBadan"
-                    className="block text-sm font-medium text-gray-700"
+                    className="block text-sm font-medium text-glass-secondary"
                   >
                     Berat Badan (kg)
                   </label>
@@ -1485,7 +1485,7 @@ const PatientConsultationDetail = () => {
               <div>
                 <label
                   htmlFor="petugasEditPasien"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-glass-secondary"
                 >
                   Petugas yang Mengedit:
                 </label>
@@ -1520,7 +1520,7 @@ const PatientConsultationDetail = () => {
                 <button
                   type="button"
                   onClick={closeEditPatientModal}
-                  className="inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
+                  className="inline-flex justify-center px-4 py-2 text-sm font-medium text-glass-secondary bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
                 >
                   Batal
                 </button>

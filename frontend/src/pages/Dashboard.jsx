@@ -92,7 +92,7 @@ const Dashboard = () => {
       transition={{ duration: 0.5 }}
       className="space-y-8"
     >
-      <h1 className="text-4xl font-extrabold text-gray-900 mb-8 border-b pb-4">
+      <h1 className="text-4xl font-extrabold text-glass-primary mb-8 border-b border-white/20 pb-4">
         Dashboard Klinik
       </h1>
 
@@ -104,12 +104,12 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <motion.div
-          className="bg-white p-6 rounded-xl shadow-lg border border-gray-200"
+          className="glass-card p-6"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b pb-3">
+          <h2 className="text-2xl font-semibold text-glass-primary mb-4 border-b border-white/20 pb-3">
             Pasien Baru Hari Ini
           </h2>
           {newPatientsToday.length > 0 ? (
@@ -117,7 +117,7 @@ const Dashboard = () => {
               {newPatientsToday.map((patient) => (
                 <li
                   key={patient._id}
-                  className="flex items-center p-3 bg-blue-50 rounded-lg text-blue-800 hover:bg-blue-100 transition duration-200 cursor-pointer"
+                  className="flex items-center p-3 glass-light rounded-lg text-glass-primary hover:bg-white/30 transition duration-200 cursor-pointer"
                 >
                   {" "}
                   {/* <--- Tambahkan gaya hover dan cursor */}
@@ -130,8 +130,9 @@ const Dashboard = () => {
                     {/* <--- UBAH KE LINK */}
                     <span className="font-medium mr-2">
                       {patient.nama}
-                    </span> - {patient.noKartu}
-                    <span className="ml-auto text-sm text-blue-600">
+                    </span>{" "}
+                    - {patient.noKartu}
+                    <span className="ml-auto text-sm text-glass-secondary">
                       {format(new Date(patient.tanggalDaftar), "HH:mm", {
                         locale: id,
                       })}{" "}
@@ -142,17 +143,17 @@ const Dashboard = () => {
               ))}
             </ul>
           ) : (
-            <p className="text-gray-600">Tidak ada pasien baru hari ini.</p>
+            <p className="text-glass-muted">Tidak ada pasien baru hari ini.</p>
           )}
         </motion.div>
 
         <motion.div
-          className="bg-white p-6 rounded-xl shadow-lg border border-gray-200"
+          className="glass-card p-6"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b pb-3">
+          <h2 className="text-2xl font-semibold text-glass-primary mb-4 border-b border-white/20 pb-3">
             Log Aktivitas Petugas
           </h2>
           {activityLogs.length > 0 ? (
@@ -160,18 +161,18 @@ const Dashboard = () => {
               {activityLogs.map((log, index) => (
                 <div
                   key={index}
-                  className="p-3 bg-gray-50 rounded-lg border border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between"
+                  className="p-3 glass-light rounded-lg border border-white/20 flex flex-col sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="flex-1">
-                    <p className="text-gray-800 font-medium">
-                      <span className="text-blue-600">{log.oleh}</span>{" "}
+                    <p className="text-glass-primary font-medium">
+                      <span className="text-blue-300">{log.oleh}</span>{" "}
                       {log.aksi.toLowerCase()} {log.type.toLowerCase()}{" "}
                       <span className="font-semibold">{log.entityName}</span> (
                       {log.noKartu})
                     </p>
-                    <p className="text-sm text-gray-500">{log.catatan}</p>
+                    <p className="text-sm text-glass-muted">{log.catatan}</p>
                   </div>
-                  <span className="text-xs text-gray-500 mt-2 sm:mt-0 sm:ml-4 flex-shrink-0">
+                  <span className="text-xs text-glass-muted mt-2 sm:mt-0 sm:ml-4 flex-shrink-0">
                     {format(new Date(log.pada), "dd-MM-yyyy HH:mm", {
                       locale: id,
                     })}
@@ -180,7 +181,7 @@ const Dashboard = () => {
               ))}
             </div>
           ) : (
-            <p className="text-gray-600">Tidak ada aktivitas terbaru.</p>
+            <p className="text-glass-muted">Tidak ada aktivitas terbaru.</p>
           )}
         </motion.div>
       </div>
@@ -190,12 +191,12 @@ const Dashboard = () => {
 
 const StatCard = ({ title, value }) => (
   <motion.div
-    className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 text-center"
+    className="glass-card p-6 text-center glass-card-hover"
     whileHover={{ scale: 1.02 }}
     transition={{ type: "spring", stiffness: 400, damping: 10 }}
   >
-    <h3 className="text-lg font-medium text-gray-600 mb-2">{title}</h3>
-    <p className="text-5xl font-extrabold text-blue-600">{value}</p>
+    <h3 className="text-lg font-medium text-glass-secondary mb-2">{title}</h3>
+    <p className="text-5xl font-extrabold text-white drop-shadow-lg">{value}</p>
   </motion.div>
 );
 

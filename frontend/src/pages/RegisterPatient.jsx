@@ -186,9 +186,9 @@ const RegisterPatient = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-lg border border-gray-200"
+      className="max-w-4xl mx-auto p-6 glass-card  "
     >
-      <h1 className="text-3xl font-bold text-gray-900 mb-6 border-b pb-4">
+      <h1 className="text-3xl font-bold text-glass-primary mb-6 border-b border-white/20 pb-4">
         Pendaftaran Pasien Baru
       </h1>
 
@@ -197,7 +197,7 @@ const RegisterPatient = () => {
         <div>
           <label
             htmlFor="nama"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-glass-secondary"
           >
             Nama Lengkap
           </label>
@@ -225,7 +225,7 @@ const RegisterPatient = () => {
           <div>
             <label
               htmlFor="provinsi"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-glass-secondary"
             >
               Provinsi
             </label>
@@ -257,7 +257,7 @@ const RegisterPatient = () => {
           <div>
             <label
               htmlFor="kabupaten"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-glass-secondary"
             >
               Kabupaten/Kota
             </label>
@@ -289,7 +289,7 @@ const RegisterPatient = () => {
           <div>
             <label
               htmlFor="kecamatan"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-glass-secondary"
             >
               Kecamatan
             </label>
@@ -321,7 +321,7 @@ const RegisterPatient = () => {
           <div>
             <label
               htmlFor="kelurahan"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-glass-secondary"
             >
               Kelurahan/Desa
             </label>
@@ -357,7 +357,7 @@ const RegisterPatient = () => {
           <div>
             <label
               htmlFor="jenisKelamin"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-glass-secondary"
             >
               Jenis Kelamin
             </label>
@@ -386,7 +386,7 @@ const RegisterPatient = () => {
           <div>
             <label
               htmlFor="tanggalLahir"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-glass-secondary"
             >
               Tanggal Lahir
             </label>
@@ -413,7 +413,7 @@ const RegisterPatient = () => {
         <div>
           <label
             htmlFor="noHP"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-glass-secondary"
           >
             No. HP
           </label>
@@ -442,7 +442,7 @@ const RegisterPatient = () => {
           <div>
             <label
               htmlFor="tensiSistolik"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-glass-secondary"
             >
               Tensi (Sistolik)
             </label>
@@ -468,7 +468,7 @@ const RegisterPatient = () => {
           <div>
             <label
               htmlFor="tensiDiastolik"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-glass-secondary"
             >
               Tensi (Diastolik)
             </label>
@@ -494,7 +494,7 @@ const RegisterPatient = () => {
           <div>
             <label
               htmlFor="tinggiBadan"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-glass-secondary"
             >
               Tinggi Badan (cm)
             </label>
@@ -518,7 +518,7 @@ const RegisterPatient = () => {
           <div>
             <label
               htmlFor="beratBadan"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-glass-secondary"
             >
               Berat Badan (kg)
             </label>
@@ -545,7 +545,7 @@ const RegisterPatient = () => {
         <div>
           <label
             htmlFor="petugasPendaftaran"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-glass-secondary"
           >
             Petugas Pendaftaran
           </label>
