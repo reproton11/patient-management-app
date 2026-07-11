@@ -14,6 +14,8 @@ import {
   PrinterIcon,
   TrashIcon,
   PencilIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
 } from "@heroicons/react/outline";
 
 // Import jspdf dan html2canvas
@@ -566,34 +568,44 @@ const PatientConsultationDetail = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="space-y-8"
+      className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
     >
-      <h1 className="text-4xl font-extrabold text-gray-900 mb-8 border-b pb-4">
-        Konsultasi Pasien: {patient.nama}
-      </h1>
+      {/* Header dengan gradient background */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl shadow-xl p-6 mb-8">
+        <div className="absolute inset-0 bg-black opacity-10"></div>
+        <div className="relative z-10">
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+            Konsultasi Pasien
+          </h1>
+          <p className="text-blue-100 text-lg">{patient.nama}</p>
+        </div>
+      </div>
 
       {/* Patient Info Card */}
       <motion.div
-        className="bg-white p-6 rounded-xl shadow-lg border border-gray-200"
-        initial={{ opacity: 0, scale: 0.95 }}
+        className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100"
+        initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
       >
-        <div className="flex justify-between items-center mb-4 no-print">
-          <h2 className="text-2xl font-semibold text-gray-800">
-            Detail Pasien
-          </h2>
-          <div className="flex items-center space-x-3">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 no-print gap-4">
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-800">
+              Detail Pasien
+            </h2>
+            <p className="text-gray-500 text-sm mt-1">Informasi lengkap pasien</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={openEditPatientModal}
-              className="inline-flex justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition duration-200"
+              className="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-xl shadow-sm text-white bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-all duration-200 transform hover:scale-105"
             >
               <PencilIcon className="h-5 w-5 mr-2" />
-              Edit Data Pasien
+              Edit Data
             </button>
             <button
-              onClick={handleGeneratePdf} // Panggil fungsi generate PDF yang baru
-              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200"
+              onClick={handleGeneratePdf}
+              className="inline-flex items-center px-4 py-2.5 border border-transparent shadow-sm text-sm font-medium rounded-xl text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               disabled={
                 !patient ||
                 loading ||
@@ -606,22 +618,22 @@ const PatientConsultationDetail = () => {
             </button>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-gray-700">
-          <div>
-            <p className="font-medium">No. Kartu:</p>
-            <p className="font-bold text-lg text-blue-600">{patient.noKartu}</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 text-gray-700">
+          <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">No. Kartu</p>
+            <p className="font-bold text-lg text-blue-600 mt-1">{patient.noKartu}</p>
           </div>
-          <div>
-            <p className="font-medium">Nama:</p>
-            <p>{patient.nama}</p>
+          <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Nama</p>
+            <p className="font-semibold text-gray-800 mt-1">{patient.nama}</p>
           </div>
-          <div>
-            <p className="font-medium">Jenis Kelamin:</p>
-            <p>{patient.jenisKelamin}</p>
+          <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Jenis Kelamin</p>
+            <p className="font-medium text-gray-700 mt-1">{patient.jenisKelamin}</p>
           </div>
-          <div>
-            <p className="font-medium">Tanggal Lahir:</p>
-            <p>
+          <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Tanggal Lahir</p>
+            <p className="text-gray-700 mt-1">
               {patient.tanggalLahir
                 ? format(new Date(patient.tanggalLahir), "dd MMMM yyyy", {
                     locale: id,
@@ -629,35 +641,35 @@ const PatientConsultationDetail = () => {
                 : "-"}
             </p>
           </div>
-          <div>
-            <p className="font-medium">Umur:</p>
-            <p>
+          <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Umur</p>
+            <p className="text-gray-700 mt-1">
               {patient.tanggalLahir ? calculateAge(patient.tanggalLahir) : "-"}{" "}
               tahun
             </p>
           </div>
-          <div>
-            <p className="font-medium">No. HP:</p>
-            <p>{patient.noHP}</p>
+          <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">No. HP</p>
+            <p className="text-gray-700 mt-1">{patient.noHP}</p>
           </div>
-          <div>
-            <p className="font-medium">Alamat:</p>
-            <p>
+          <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 md:col-span-2 lg:col-span-3">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Alamat</p>
+            <p className="text-gray-700 mt-1">
               {patient.alamat.kelurahan}, {patient.alamat.kecamatan},{" "}
               {patient.alamat.kabupaten}, {patient.alamat.provinsi}
             </p>
           </div>
-          <div>
-            <p className="font-medium">Tgl. Daftar:</p>
-            <p>
+          <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Tgl. Daftar</p>
+            <p className="text-gray-700 mt-1">
               {format(new Date(patient.tanggalDaftar), "dd MMMM yyyy, HH:mm", {
                 locale: id,
               })}
             </p>
           </div>
-          <div>
-            <p className="font-medium">Terakhir di Update:</p>
-            <p>
+          <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Terakhir Update</p>
+            <p className="text-gray-700 mt-1">
               {format(
                 new Date(patient.terakhirDiUpdate),
                 "dd MMMM yyyy, HH:mm",
@@ -669,58 +681,71 @@ const PatientConsultationDetail = () => {
       </motion.div>
 
       {/* Consultations History */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <motion.div
-          className="lg:col-span-1 bg-white p-6 rounded-xl shadow-lg border border-gray-200 no-print h-fit"
+          className="lg:col-span-1 bg-white p-6 rounded-2xl shadow-lg border border-gray-100 no-print h-fit"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b pb-3">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4 pb-3 border-b border-gray-200">
             Riwayat Konsultasi
           </h2>
           <button
             onClick={() => resetFormForNewConsultation(patient)}
-            className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-200 mb-4"
+            className="w-full inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-xl shadow-md text-white bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 transform hover:scale-[1.02] mb-4"
           >
             <DocumentTextIcon className="h-5 w-5 mr-2" />
-            Mulai Konsultasi Baru
+            Konsultasi Baru
           </button>
           {displayedConsultations.length > 0 ? (
-            <ul className="space-y-3 max-h-96 overflow-y-auto pr-2">
+            <ul className="space-y-2 max-h-96 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
               {displayedConsultations.map((consultation) => (
                 <li key={consultation._id}>
                   <button
                     onClick={() => handleConsultationSelect(consultation)}
-                    className={`w-full text-left p-3 rounded-lg border transition duration-200
+                    className={`w-full text-left p-4 rounded-xl border transition-all duration-200 transform hover:scale-[1.02]
                       ${
                         activeConsultationId === consultation._id
-                          ? "bg-blue-100 border-blue-500 text-blue-800 shadow-md"
-                          : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100 hover:border-blue-300"
+                          ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-500 text-blue-800 shadow-md"
+                          : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-blue-300 hover:shadow-sm"
                       }`}
                   >
-                    <p className="font-medium">
-                      Konsultasi pada:{" "}
-                      {format(
-                        new Date(consultation.tanggalKonsultasi),
-                        "dd MMMM yyyy, HH:mm",
-                        { locale: id }
-                      )}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      Oleh: {consultation.petugasKonsultasi}
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-sm">
+                          {format(
+                            new Date(consultation.tanggalKonsultasi),
+                            "dd MMMM yyyy",
+                            { locale: id }
+                          )}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {format(
+                            new Date(consultation.tanggalKonsultasi),
+                            "HH:mm",
+                            { locale: id }
+                          )}
+                        </p>
+                      </div>
+                      <span className="text-xs bg-white/50 px-2 py-1 rounded-lg text-gray-600">
+                        {consultation.petugasKonsultasi}
+                      </span>
+                    </div>
                   </button>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-gray-600">Belum ada riwayat konsultasi.</p>
+            <div className="text-center py-8">
+              <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
+              <p className="mt-2 text-gray-500">Belum ada riwayat konsultasi.</p>
+            </div>
           )}
           {totalPages > 1 && (
-            <div className="flex justify-center mt-4">
+            <div className="flex justify-center mt-6">
               <nav
-                className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                className="relative z-0 inline-flex rounded-full shadow-lg -space-x-1 bg-white p-1 border border-gray-200"
                 aria-label="Pagination"
               >
                 <button
@@ -728,33 +753,35 @@ const PatientConsultationDetail = () => {
                     setCurrentPage((prev) => Math.max(1, prev - 1))
                   }
                   disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="group relative inline-flex items-center justify-center w-10 h-10 rounded-full text-sm font-medium text-gray-700 hover:bg-gradient-to-r hover:from-blue-500 hover:to-indigo-500 hover:text-white transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-700"
                 >
-                  Previous
+                  <ChevronLeftIcon className="w-5 h-5" />
                 </button>
+                
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(
                   (page) => (
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                      className={`relative inline-flex items-center justify-center w-10 h-10 rounded-full text-sm font-medium transition-all duration-200 ${
                         page === currentPage
-                          ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                          : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                          ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md scale-110"
+                          : "text-gray-700 hover:bg-gray-100"
                       }`}
                     >
                       {page}
                     </button>
                   )
                 )}
+                
                 <button
                   onClick={() =>
                     setCurrentPage((prev) => Math.min(totalPages, prev + 1))
                   }
                   disabled={currentPage === totalPages}
-                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="group relative inline-flex items-center justify-center w-10 h-10 rounded-full text-sm font-medium text-gray-700 hover:bg-gradient-to-r hover:from-blue-500 hover:to-indigo-500 hover:text-white transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-700"
                 >
-                  Next
+                  <ChevronRightIcon className="w-5 h-5" />
                 </button>
               </nav>
             </div>
@@ -763,18 +790,25 @@ const PatientConsultationDetail = () => {
 
         {/* SOAP Form & File Upload */}
         <motion.div
-          className="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg border border-gray-200 no-print"
+          className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-lg border border-gray-100 no-print"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b pb-3">
-            {isNewConsultation
-              ? "Konsultasi Baru"
-              : `Detail Konsultasi #${activeConsultation?._id?.slice(-5)}`}
-          </h2>
+          <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-800">
+              {isNewConsultation
+                ? "Konsultasi Baru"
+                : `Detail Konsultasi #${activeConsultation?._id?.slice(-5)}`}
+            </h2>
+            {isNewConsultation && (
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                Mode Baru
+              </span>
+            )}
+          </div>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             {/* Subjective */}
             <div>
               <label
@@ -1045,18 +1079,32 @@ const PatientConsultationDetail = () => {
             {/* File Upload Section (Update:Sudah dihapus dalam update fitur 25/9/2025) */}
 
             {/* Tombol Save */}
-            <div className="flex justify-end mt-6">
+            <div className="flex justify-end mt-6 pt-4 border-t border-gray-200">
               <button
                 type="button"
                 onClick={handleSaveConsultation}
-                className="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200"
                 disabled={loading}
+                className="inline-flex items-center justify-center py-3 px-8 border border-transparent shadow-lg text-base font-medium rounded-xl text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
-                {loading
-                  ? "Menyimpan..."
-                  : isNewConsultation
-                  ? "Simpan Konsultasi Baru"
-                  : "Update Konsultasi"}
+                {loading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Menyimpan...
+                  </>
+                ) : isNewConsultation ? (
+                  <>
+                    <DocumentTextIcon className="h-5 w-5 mr-2" />
+                    Simpan Konsultasi Baru
+                  </>
+                ) : (
+                  <>
+                    <DocumentTextIcon className="h-5 w-5 mr-2" />
+                    Update Konsultasi
+                  </>
+                )}
               </button>
             </div>
           </div>
