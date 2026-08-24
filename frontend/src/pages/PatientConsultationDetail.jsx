@@ -35,14 +35,10 @@ const calculateAge = (dob) => {
 };
 
 const petugasOptions = [
-  { value: "Arif", label: "Arif" },
-  { value: "Rani", label: "Rani" },
-  { value: "Nunung", label: "Nunung" },
   { value: "Heni", label: "Heni" },
   { value: "Maria", label: "Maria" },
   { value: "Emy", label: "Emy" },
-  { value: "Fadil", label: "Fadil" },
-  { value: "Rayhan", label: "Rayhan" },
+  { value: "Aziz", label: "Aziz" },
 ];
 
 const PatientConsultationDetail = () => {
@@ -98,7 +94,7 @@ const PatientConsultationDetail = () => {
   // Untuk riwayat kunjungan (pagination)
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const ITEMS_PER_PAGE = 5;
+  const ITEMS_PER_PAGE = 20;
 
   // Ref untuk PDF export
   const componentRef = useRef();

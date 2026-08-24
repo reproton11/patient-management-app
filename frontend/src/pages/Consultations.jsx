@@ -24,14 +24,10 @@ const calculateAge = (dob) => {
 
 const petugasOptions = [
   { value: "", label: "Semua Petugas" },
-  { value: "Arif", label: "Arif" },
-  { value: "Rani", label: "Rani" },
-  { value: "Nunung", label: "Nunung" },
   { value: "Heni", label: "Heni" },
   { value: "Maria", label: "Maria" },
   { value: "Emy", label: "Emy" },
-  { value: "Fadil", label: "Fadil" },
-  { value: "Rayhan", label: "Rayhan" },
+  { value: "Aziz", label: "Aziz" },
 ];
 
 const jenisKelaminOptions = [
@@ -58,7 +54,7 @@ const Consultations = () => {
   const [patientToDelete, setPatientToDelete] = useState(null);
   const [petugasPenghapus, setPetugasPenghapus] = useState(""); // Siapa yang menghapus
 
-  const ITEMS_PER_PAGE = 10; // Jumlah item per halaman
+  const ITEMS_PER_PAGE = 20; // Jumlah item per halaman
 
   const fetchPatients = async (page = 1) => {
     setLoading(true);

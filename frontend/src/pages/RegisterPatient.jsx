@@ -9,14 +9,10 @@ import useIndonesiaRegions from "../hooks/useIndonesiaRegions"; // IMPORT HOOK B
 
 // Petugas Pendaftaran
 const petugasOptions = [
-  { value: "Arif", label: "Arif" },
-  { value: "Rani", label: "Rani" },
-  { value: "Nunung", label: "Nunung" },
   { value: "Heni", label: "Heni" },
   { value: "Maria", label: "Maria" },
   { value: "Emy", label: "Emy" },
-  { value: "Fadil", label: "Fadil" },
-  { value: "Rayhan", label: "Rayhan" },
+  { value: "Aziz", label: "Aziz" },
 ];
 
 const jenisKelaminOptions = [

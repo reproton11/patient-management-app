@@ -68,16 +68,7 @@ const pasienSchema = new Schema(
     },
     petugasPendaftaran: {
       type: String,
-      enum: [
-        "Arif",
-        "Rani",
-        "Nunung",
-        "Heni",
-        "Maria",
-        "Emy",
-        "Fadil",
-        "Rayhan",
-      ],
+      enum: ["Heni", "Maria", "Emy", "Aziz"],
       required: true,
     },
     logAktivitas: [logAktivitasSchema],
