@@ -367,7 +367,7 @@ const Consultations = () => {
                       to={`/consultations/${patient._id}`}
                       className="text-blue-600 hover:text-blue-900 mr-3 transition duration-200"
                     >
-                      Lihat/Konsultasi
+                      Lihat Konsultasi
                     </Link>
                     <button
                       onClick={() => openDeleteModal(patient)}

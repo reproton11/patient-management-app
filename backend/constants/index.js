@@ -55,14 +55,6 @@ const LETTER_GROUPS_MAP = {
   N: "N",
 };
 
-// Konfigurasi zona waktu
-const TIME_ZONE_JAKARTA = "Asia/Jakarta";
-
-// Konfigurasi email
-const EMAIL_CONFIG = {
-  senderName: "Klinik AZ",
-};
-
 // Konfigurasi pagination default
 const PAGINATION_CONFIG = {
   DEFAULT_PAGE: 1,
@@ -89,8 +81,6 @@ module.exports = {
   VALID_PETUGAS,
   START_ANGKA_MAP,
   LETTER_GROUPS_MAP,
-  TIME_ZONE_JAKARTA,
-  EMAIL_CONFIG,
   PAGINATION_CONFIG,
   VALIDATION_CONFIG,
 };
