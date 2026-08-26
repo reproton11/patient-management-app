@@ -2,7 +2,8 @@
 import axios from "axios";
 
 // Vite akan menyisipkan nilai ini dari konfigurasi `define`
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// Fallback ke "/api" agar lewat proxy Vite saat .env tidak tersedia (development lokal)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
 // Tambahkan log untuk debugging
 console.log("Axios API_BASE_URL:", API_BASE_URL);
