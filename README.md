@@ -15,17 +15,20 @@ patient-management-app/
 ├── frontend/          # React SPA
 │   └── src/
 │       ├── components/analytics/   # Komponen chart analytics
+│       ├── hooks/                  # useIndonesiaRegions
+│       ├── layouts/                # DefaultLayout (shell aplikasi)
 │       ├── pages/                  # Halaman (lazy-loaded)
-│       ├── services/               # api.js (axios + interceptor), auth.js
+│       ├── services/               # api.js (axios + interceptor), auth.js (sesi localStorage)
 │       └── utils/                  # Helper bersama
 ├── backend/
+│   ├── constants/     # VALID_PETUGAS, pagination, validasi, penomoran kartu
 │   ├── controllers/   # Logika endpoint
 │   ├── middlewares/   # auth, error handler, asyncHandler
 │   ├── models/        # Pasien, Konsultasi, User
 │   ├── routes/        # /api/auth, /api/pasien, /api/konsultasi, /api/analytics
-│   ├── scripts/       # seedAdmin.js
+│   ├── scripts/       # seedAdmin, migrasi nama Title Case, sinkron password admin
 │   └── utils/         # jwt helper
-└── PANDUAN_IMPLEMENTASI.md  # Dokumentasi perubahan terbaru
+└── AGENTS.md          # Konvensi & panduan untuk AI coding assistant
 ```
 
 ## Menjalankan di Lokal
@@ -100,6 +103,6 @@ npm run seed:admin     # buat akun admin pertama (butuh ADMIN_* env)
 ## Keamanan
 
 - Semua endpoint `/api/pasien|konsultasi|analytics` memerlukan Bearer token (kadaluarsa 12 jam)
-- Identitas petugas pada audit trail diambil dari token login, bukan input user
+- Identitas petugas pada record & audit trail dipilih dari dropdown (`VALID_PETUGAS`), bukan akun login; fallback ke akun login hanya saat dropdown tidak terkirim
 - Helmet aktif; rate limiting global 500 req/15 menit dan login dibatasi 10 percobaan/15 menit
 - Pagination dibatasi maksimal 100 item per halaman
