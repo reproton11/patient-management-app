@@ -3,17 +3,8 @@ import React from "react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 
-// Fungsi calculateAge yang sama
-const calculateAge = (dob) => {
-  const birthDate = new Date(dob);
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const m = today.getMonth() - birthDate.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  return age;
-};
+// Fungsi calculateAge dari utils bersama
+import { calculateAge } from "../utils/helpers";
 
 const PatientMedicalRecordTemplate = React.forwardRef(
   ({ patient, consultations }, ref) => {
@@ -234,7 +225,15 @@ const PatientMedicalRecordTemplate = React.forwardRef(
             <span
               className="info-value"
               style={{ color: "#2d3748" }}
-            >{`${patient.alamat.kelurahan}, ${patient.alamat.kecamatan}, ${patient.alamat.kabupaten}, ${patient.alamat.provinsi}`}</span>
+            >{`${
+              patient.alamat
+                ? `${patient.alamat.kelurahan || "-"}, ${
+                    patient.alamat.kecamatan || "-"
+                  }, ${patient.alamat.kabupaten || "-"}, ${
+                    patient.alamat.provinsi || "-"
+                  }`
+                : "-"
+            }`}</span>
           </div>
           <div
             className="info-item"
@@ -247,9 +246,10 @@ const PatientMedicalRecordTemplate = React.forwardRef(
               Tgl. Daftar:
             </span>
             <span className="info-value" style={{ color: "#2d3748" }}>
-              {format(new Date(patient.tanggalDaftar), "dd MMMM yyyy, HH:mm", {
-                locale: id,
-              })}
+              {patient.tanggalDaftar &&
+                format(new Date(patient.tanggalDaftar), "dd MMMM yyyy, HH:mm", {
+                  locale: id,
+                })}
             </span>
           </div>
           <div
@@ -263,11 +263,12 @@ const PatientMedicalRecordTemplate = React.forwardRef(
               Terakhir Update:
             </span>
             <span className="info-value" style={{ color: "#2d3748" }}>
-              {format(
-                new Date(patient.terakhirDiUpdate),
-                "dd MMMM yyyy, HH:mm",
-                { locale: id }
-              )}
+              {patient.terakhirDiUpdate &&
+                format(
+                  new Date(patient.terakhirDiUpdate),
+                  "dd MMMM yyyy, HH:mm",
+                  { locale: id }
+                )}
             </span>
           </div>
           <div

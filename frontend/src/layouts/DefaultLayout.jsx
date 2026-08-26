@@ -1,14 +1,15 @@
 // patient-management-app/frontend/src/layouts/DefaultLayout.jsx
 import React from "react";
 import { motion } from "framer-motion";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   HomeIcon,
   UserGroupIcon,
   ClipboardListIcon,
   ChartBarIcon,
-  CogIcon,
-} from "@heroicons/react/outline"; // Untuk ikon
+  LogoutIcon,
+} from "@heroicons/react/outline";
+import { getUser, clearSession } from "../services/auth";
 
 const navItems = [
   { name: "Dashboard", path: "/", icon: HomeIcon },
@@ -31,6 +32,14 @@ const navItems = [
 ];
 
 const DefaultLayout = () => {
+  const navigate = useNavigate();
+  const user = getUser();
+
+  const handleLogout = () => {
+    clearSession();
+    navigate("/login", { replace: true });
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-100 font-sans">
       {/* Sidebar */}
@@ -74,8 +83,28 @@ const DefaultLayout = () => {
             ))}
           </ul>
         </nav>
-        <div className="text-center text-sm text-gray-500 mt-auto pt-6 border-t border-gray-200">
-          &copy; {new Date().getFullYear()} Klinik AZ. All rights reserved.
+        <div className="mt-auto pt-6 border-t border-gray-200">
+          {user && (
+            <div className="flex items-center justify-between mb-4 px-1">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-gray-800 truncate">
+                  {user.nama}
+                </p>
+                <p className="text-xs text-gray-500 truncate">@{user.username}</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                title="Keluar"
+                className="p-2 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <LogoutIcon className="h-5 w-5" />
+              </button>
+            </div>
+          )}
+          <div className="text-center text-sm text-gray-500">
+            &copy; {new Date().getFullYear()} Klinik AZ. All rights reserved.
+          </div>
         </div>
       </motion.aside>
 

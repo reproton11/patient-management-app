@@ -1,16 +1,26 @@
-// patient-management-app/backend/controllers/pasienController.js
 const Pasien = require("../models/Pasien");
 const Konsultasi = require("../models/Konsultasi");
 const Joi = require("@hapi/joi");
+const asyncHandler = require("../middlewares/asyncHandler");
 const {
   VALID_PETUGAS,
   START_ANGKA_MAP,
   LETTER_GROUPS_MAP,
   VALIDATION_CONFIG,
+  PAGINATION_CONFIG,
 } = require("../constants");
 
-// Schema validasi Joi untuk pendaftaran pasien
-const pasienSchema = Joi.object({
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+// Normalisasi nama ke Title Case: "budi SANTOSO" -> "Budi Santoso"
+const toTitleCase = (str) =>
+  String(str)
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase()
+    .replace(/(^|\s)[a-z]/g, (ch) => ch.toUpperCase());
+
+const pasienBaseFields = {
   nama: Joi.string()
     .pattern(/^[a-zA-Z\s]+$/)
     .required()
@@ -67,6 +77,11 @@ const pasienSchema = Joi.object({
     .min(VALIDATION_CONFIG.BERAT_BADAN_MIN)
     .max(VALIDATION_CONFIG.BERAT_BADAN_MAX)
     .optional(),
+};
+
+// Schema untuk pendaftaran pasien baru (petugas wajib)
+const pasienSchema = Joi.object({
+  ...pasienBaseFields,
   petugasPendaftaran: Joi.string()
     .valid(...VALID_PETUGAS)
     .required()
@@ -76,31 +91,30 @@ const pasienSchema = Joi.object({
     }),
 });
 
-// Helper untuk generate No. Kartu
+// Schema untuk update pasien: petugas opsional.
+// Jika dikirim, dipakai sebagai identitas pada log aktivitas & field petugas.
+const pasienUpdateSchema = Joi.object({
+  ...pasienBaseFields,
+  petugasPendaftaran: Joi.string()
+    .valid(...VALID_PETUGAS)
+    .optional(),
+});
+
 const generateNoKartu = async (nama) => {
   const hurufAwalInput = nama.charAt(0).toUpperCase();
-
-  // Tentukan nama grup untuk huruf awal ini
   const groupKey = LETTER_GROUPS_MAP[hurufAwalInput] || hurufAwalInput;
-
-  // Ambil base angka dari map berdasarkan groupKey
   const baseAngka =
     START_ANGKA_MAP[groupKey] !== undefined
       ? START_ANGKA_MAP[groupKey]
       : START_ANGKA_MAP["DEFAULT"];
 
-  // Buat regex untuk mencari semua nomor kartu yang termasuk dalam grup ini
   let regexPattern;
   if (groupKey === "C_G_GROUP") {
     regexPattern = new RegExp(`^[CG]-\\d{5}$`);
   } else {
-    // Jika huruf awal tidak ada di LETTER_GROUPS_MAP, kita asumsikan itu adalah grupnya sendiri
-    // Dan baseAngka akan berasal dari START_ANGKA_MAP[hurufAwalInput] atau DEFAULT
     regexPattern = new RegExp(`^${hurufAwalInput}-\\d{5}$`);
   }
 
-  // Temukan angka urut terakhir untuk grup huruf ini
-  // Menggunakan findOne dengan sort -1 dan regex akan mencari yang terbaru berdasarkan angka tertinggi
   const lastPasienInGroup = await Pasien.findOne({
     noKartu: regexPattern,
   }).sort({ noKartu: -1 });
@@ -114,11 +128,6 @@ const generateNoKartu = async (nama) => {
     if (lastAngka >= baseAngka) {
       angkaUrut = lastAngka + 1;
     } else {
-      const existingPasienWithBaseInGroup = await Pasien.findOne({
-        noKartu: regexPattern, // Gunakan regex yang sama
-      });
-      // Kita perlu mengecek apakah baseAngka itu sendiri sudah dipakai
-      // Daripada mencari seluruh groupKey, kita hanya perlu mencari satu specific noKartu.
       const specificBaseNoKartu = `${hurufAwalInput}-${String(
         baseAngka
       ).padStart(5, "0")}`;
@@ -141,119 +150,94 @@ const generateNoKartu = async (nama) => {
 
 // @route   POST api/pasien
 // @desc    Daftarkan pasien baru
-// @access  Public
-exports.daftarPasien = async (req, res) => {
-  try {
-    const { error, value } = pasienSchema.validate(req.body, {
-      abortEarly: false,
+// @access  Private
+exports.daftarPasien = asyncHandler(async (req, res) => {
+  const { error, value } = pasienSchema.validate(req.body, {
+    abortEarly: false,
+  });
+  if (error) {
+    return res.status(400).json({
+      message: "Validasi gagal",
+      errors: error.details.map((err) => ({
+        field: err.path.join("."),
+        message: err.message,
+      })),
     });
-    if (error) {
-      return res.status(400).json({
-        message: "Validasi gagal",
-        errors: error.details.map((err) => ({
-          field: err.path.join("."),
-          message: err.message,
-        })),
-      });
-    }
-
-    const { nama, petugasPendaftaran, ...otherData } = value;
-
-    let noKartu;
-    let isUnique = false;
-    let attempts = 0;
-    const MAX_ATTEMPTS = VALIDATION_CONFIG.MAX_CARD_GENERATION_ATTEMPTS;
-
-    while (!isUnique && attempts < MAX_ATTEMPTS) {
-      noKartu = await generateNoKartu(nama);
-      const existingPasien = await Pasien.findOne({ noKartu });
-      if (!existingPasien) {
-        isUnique = true;
-      } else {
-        console.warn(
-          `Generated No. Kartu ${noKartu} already exists. Retrying... (Attempt ${
-            attempts + 1
-          })`
-        );
-      }
-      attempts++;
-      if (attempts === MAX_ATTEMPTS && !isUnique) {
-        console.error(
-          `Failed to generate a unique No. Kartu for ${nama} after ${MAX_ATTEMPTS} attempts.`
-        );
-        break;
-      }
-    }
-
-    if (!isUnique) {
-      return res.status(500).json({
-        message: "Gagal membuat nomor kartu unik setelah beberapa percobaan.",
-      });
-    }
-
-    const newPasien = new Pasien({
-      noKartu,
-      nama,
-      petugasPendaftaran,
-      ...otherData,
-      logAktivitas: [
-        {
-          aksi: "CREATE",
-          oleh: petugasPendaftaran,
-          catatan: "Pasien baru didaftarkan",
-        },
-      ],
-    });
-
-    const pasien = await newPasien.save();
-
-    const newKonsultasi = new Konsultasi({
-      pasienId: pasien._id,
-      soap: {
-        O: {
-          tensi: pasien.tensi,
-          tinggiBadan: pasien.tinggiBadan,
-          beratBadan: pasien.beratBadan,
-          tambahan: "N ",
-        },
-      },
-      petugasKonsultasi: petugasPendaftaran,
-    });
-    await newKonsultasi.save();
-
-    res.status(201).json({ message: "Pendaftaran pasien berhasil", pasien });
-  } catch (err) {
-    console.error(err.message);
-    if (err.code === 11000) {
-      return res
-        .status(400)
-        .json({ message: "Nomor kartu pasien sudah ada, coba lagi." });
-    }
-    res.status(500).send("Server Error");
   }
-};
+
+  // Normalisasi nama ke Title Case sebelum diproses/disisipkan
+  const nama = toTitleCase(value.nama);
+  const petugasPendaftaran = value.petugasPendaftaran;
+
+  let noKartu;
+  let isUnique = false;
+  let attempts = 0;
+  const MAX_ATTEMPTS = VALIDATION_CONFIG.MAX_CARD_GENERATION_ATTEMPTS;
+
+  while (!isUnique && attempts < MAX_ATTEMPTS) {
+    noKartu = await generateNoKartu(nama);
+    const existingPasien = await Pasien.findOne({ noKartu });
+    if (!existingPasien) {
+      isUnique = true;
+    }
+    attempts++;
+  }
+
+  if (!isUnique) {
+    return res.status(500).json({
+      message: "Gagal membuat nomor kartu unik setelah beberapa percobaan.",
+    });
+  }
+
+  const newPasien = new Pasien({
+    noKartu,
+    ...value,
+    nama,
+    petugasPendaftaran,
+    logAktivitas: [
+      {
+        aksi: "CREATE",
+        oleh: petugasPendaftaran,
+        catatan: "Pasien baru didaftarkan",
+      },
+    ],
+  });
+
+  const pasien = await newPasien.save();
+
+  const newKonsultasi = new Konsultasi({
+    pasienId: pasien._id,
+    soap: {
+      O: {
+        tensi: pasien.tensi,
+        tinggiBadan: pasien.tinggiBadan,
+        beratBadan: pasien.beratBadan,
+        tambahan: "N ",
+      },
+    },
+    petugasKonsultasi: petugasPendaftaran,
+  });
+  await newKonsultasi.save();
+
+  res.status(201).json({ message: "Pendaftaran pasien berhasil", pasien });
+});
 
 // @route   GET api/pasien
 // @desc    Dapatkan semua daftar pasien dengan pagination dan filtering
-// @access  Public
-exports.getSemuaPasien = async (req, res) => {
-  const {
-    page = 1,
-    limit = 10,
-    search,
-    tanggalDaftar,
-    jenisKelamin,
-    petugasPendaftaran,
-    sortBy = "createdAt", // Default sort by createdAt
-    sortOrder = "desc", // Default descending order
-  } = req.query;
+// @access  Private
+exports.getSemuaPasien = asyncHandler(async (req, res) => {
+  const page = Math.max(parseInt(req.query.page, 10) || PAGINATION_CONFIG.DEFAULT_PAGE, 1);
+  const requestedLimit = parseInt(req.query.limit, 10) || PAGINATION_CONFIG.DEFAULT_LIMIT;
+  const limit = Math.min(requestedLimit, PAGINATION_CONFIG.MAX_LIMIT);
+  const { search, tanggalDaftar, jenisKelamin, petugasPendaftaran } = req.query;
 
   const query = {};
   if (search) {
+    const escaped = escapeRegex(String(search));
     query.$or = [
-      { nama: { $regex: search, $options: "i" } },
-      { noKartu: { $regex: search, $options: "i" } },
-      { noHP: { $regex: search, $options: "i" } },
+      { nama: { $regex: escaped, $options: "i" } },
+      { noKartu: { $regex: escaped, $options: "i" } },
+      { noHP: { $regex: escaped, $options: "i" } },
     ];
   }
   if (tanggalDaftar) {
@@ -261,194 +245,200 @@ exports.getSemuaPasien = async (req, res) => {
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(tanggalDaftar);
     endOfDay.setHours(23, 59, 59, 999);
-    query.tanggalDaftar = { $gte: startOfDay, $lte: endOfDay };
+    if (!Number.isNaN(startOfDay.getTime())) {
+      query.tanggalDaftar = { $gte: startOfDay, $lte: endOfDay };
+    }
   }
   if (jenisKelamin) {
-    query.jenisKelamin = jenisKelamin;
+    query.jenisKelamin = String(jenisKelamin);
   }
   if (petugasPendaftaran) {
-    query.petugasPendaftaran = petugasPendaftaran;
+    query.petugasPendaftaran = String(petugasPendaftaran);
   }
 
-  //Konfigurasi sorting
-  const sort = {};
-  //Konversi sortOrder: 'asc' menjadi 1 dan 'desc' menjadi -1
-  const order = sortOrder === "asc" ? 1 : -1;
-  sort[sortBy] = order; // Contoh { nama: 1 } atau { tanggalDaftar: -1 }
+  const ALLOWED_SORT_FIELDS = [
+    "createdAt",
+    "updatedAt",
+    "nama",
+    "noKartu",
+    "tanggalDaftar",
+    "tanggalLahir",
+  ];
+  const sortBy = ALLOWED_SORT_FIELDS.includes(req.query.sortBy)
+    ? req.query.sortBy
+    : "createdAt";
+  const order = req.query.sortOrder === "asc" ? 1 : -1;
+  const sort = { [sortBy]: order };
 
-  try {
-    const options = {
-      page: parseInt(page, 10),
-      limit: parseInt(limit, 10),
-      sort: sort, //Gunakan objek sort yang sudah dikonfigurasi
-    };
+  const result = await Pasien.paginate(query, { page, limit, sort });
 
-    const result = await Pasien.paginate(query, options);
-
-    res.json({
-      pasien: result.docs,
-      totalItems: result.totalDocs,
-      totalPages: result.totalPages,
-      currentPage: result.page,
-    });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server Error");
-  }
-};
+  res.json({
+    pasien: result.docs,
+    totalItems: result.totalDocs,
+    totalPages: result.totalPages,
+    currentPage: result.page,
+  });
+});
 
 // @route   GET api/pasien/:id
 // @desc    Dapatkan detail pasien berdasarkan ID
-// @access  Public
-exports.getPasienById = async (req, res) => {
-  try {
-    const pasien = await Pasien.findById(req.params.id);
-    if (!pasien) {
-      return res.status(404).json({ message: "Pasien tidak ditemukan" });
-    }
-    res.json(pasien);
-  } catch (err) {
-    console.error(err.message);
-    if (err.kind === "ObjectId") {
-      return res.status(404).json({ message: "Pasien tidak ditemukan" });
-    }
-    res.status(500).send("Server Error");
+// @access  Private
+exports.getPasienById = asyncHandler(async (req, res) => {
+  const pasien = await Pasien.findById(req.params.id);
+  if (!pasien) {
+    return res.status(404).json({ message: "Pasien tidak ditemukan" });
   }
-};
+  res.json(pasien);
+});
 
 // @route   PUT api/pasien/:id
 // @desc    Update data pasien
-// @access  Public
-exports.updatePasien = async (req, res) => {
-  const { petugasUpdate } = req.body;
-  if (!petugasUpdate) {
-    return res
-      .status(400)
-      .json({ message: "Nama petugas yang melakukan update diperlukan." });
+// @access  Private
+exports.updatePasien = asyncHandler(async (req, res) => {
+  const { error, value } = pasienUpdateSchema.validate(req.body, {
+    abortEarly: false,
+    allowUnknown: true,
+  });
+  if (error) {
+    return res.status(400).json({
+      message: "Validasi gagal",
+      errors: error.details.map((err) => ({
+        field: err.path.join("."),
+        message: err.message,
+      })),
+    });
   }
 
-  try {
-    const { error, value } = pasienSchema.validate(req.body, {
-      abortEarly: false,
-      allowUnknown: true,
-    });
-    if (error) {
-      return res.status(400).json({
-        message: "Validasi gagal",
-        errors: error.details.map((err) => ({
-          field: err.path.join("."),
-          message: err.message,
-        })),
-      });
-    }
+  if (value.nama) {
+    value.nama = toTitleCase(value.nama);
+  }
 
-    const pasienLama = await Pasien.findById(req.params.id);
-    if (!pasienLama) {
-      return res.status(404).json({ message: "Pasien tidak ditemukan" });
-    }
+  const pasienLama = await Pasien.findById(req.params.id);
+  if (!pasienLama) {
+    return res.status(404).json({ message: "Pasien tidak ditemukan" });
+  }
 
-    const changes = [];
-    for (const key in value) {
-      if (
-        key !== "petugasUpdate" &&
-        JSON.stringify(pasienLama[key]) !== JSON.stringify(value[key])
-      ) {
-        changes.push(
-          `${key} dari '${JSON.stringify(
-            pasienLama[key]
-          )}' menjadi '${JSON.stringify(value[key])}'`
-        );
-      }
+  const changes = [];
+  for (const key in value) {
+    if (
+      key !== "petugasUpdate" &&
+      JSON.stringify(pasienLama[key]) !== JSON.stringify(value[key])
+    ) {
+      changes.push(
+        `${key} dari '${JSON.stringify(
+          pasienLama[key]
+        )}' menjadi '${JSON.stringify(value[key])}'`
+      );
     }
-    const catatanLog =
-      changes.length > 0
-        ? `Mengubah: ${changes.join(", ")}`
-        : "Tidak ada perubahan signifikan";
+  }
+  const catatanLog =
+    changes.length > 0
+      ? `Mengubah: ${changes.join(", ")}`
+      : "Tidak ada perubahan signifikan";
 
-    const updatedPasien = await Pasien.findByIdAndUpdate(
-      req.params.id,
-      {
-        ...value,
-        $push: {
-          logAktivitas: {
-            aksi: "UPDATE",
-            oleh: petugasUpdate,
-            catatan: catatanLog,
-          },
+  const petugasPelaku = value.petugasPendaftaran || req.user.nama;
+
+  const updatedPasien = await Pasien.findByIdAndUpdate(
+    req.params.id,
+    {
+      ...value,
+      $push: {
+        logAktivitas: {
+          aksi: "UPDATE",
+          oleh: petugasPelaku,
+          catatan: catatanLog,
         },
-        terakhirDiUpdate: new Date(),
       },
-      { new: true, runValidators: true }
-    );
+    },
+    { new: true, runValidators: true }
+  );
 
-    res.json({
-      message: "Data pasien berhasil diupdate",
-      pasien: updatedPasien,
-    });
-  } catch (err) {
-    console.error(err.message);
-    if (err.kind === "ObjectId") {
-      return res.status(404).json({ message: "Pasien tidak ditemukan" });
-    }
-    res.status(500).send("Server Error");
-  }
-};
+  res.json({
+    message: "Data pasien berhasil diupdate",
+    pasien: updatedPasien,
+  });
+});
 
 // @route   DELETE api/pasien/:id
-// @desc    Hapus pasien
-// @access  Public
-exports.deletePasien = async (req, res) => {
-  const { petugasPenghapus } = req.body;
-  if (!petugasPenghapus) {
-    return res
-      .status(400)
-      .json({ message: "Nama petugas yang melakukan penghapusan diperlukan." });
+// @desc    Hapus pasien beserta seluruh konsultasinya
+// @access  Private
+exports.deletePasien = asyncHandler(async (req, res) => {
+  const pasien = await Pasien.findById(req.params.id);
+
+  if (!pasien) {
+    return res.status(404).json({ message: "Pasien tidak ditemukan" });
   }
-  try {
-    const pasien = await Pasien.findById(req.params.id);
 
-    if (!pasien) {
-      return res.status(404).json({ message: "Pasien tidak ditemukan" });
-    }
+  await Pasien.findByIdAndDelete(req.params.id);
+  await Konsultasi.deleteMany({ pasienId: req.params.id });
 
-    await Pasien.findByIdAndDelete(req.params.id);
+  console.log(
+    `Pasien dengan ID ${req.params.id} dan konsultasi terkait dihapus oleh ${req.user.nama}.`
+  );
 
-    await Konsultasi.deleteMany({ pasienId: req.params.id });
+  res.json({ message: "Pasien berhasil dihapus" });
+});
 
-    console.log(
-      `Pasien dengan ID ${req.params.id} dan konsultasi terkait dihapus oleh ${petugasPenghapus}.`
-    );
+// @route   GET api/pasien/stats
+// @desc    Statistik ringkas untuk dashboard (hari/minggu/bulan ini + log aktivitas terbaru)
+// @access  Private
+exports.getDashboardStats = asyncHandler(async (req, res) => {
+  const now = new Date();
+  const startOfToday = new Date(now);
+  startOfToday.setHours(0, 0, 0, 0);
+  const startOfWeek = new Date(startOfToday);
+  startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    res.json({ message: "Pasien berhasil dihapus" });
-  } catch (err) {
-    console.error(err.message);
-    if (err.kind === "ObjectId") {
-      return res.status(404).json({ message: "Pasien tidak ditemukan" });
-    }
-    res.status(500).send("Server Error");
-  }
-};
+  const [today, week, month, total, todayPatients] = await Promise.all([
+    Pasien.countDocuments({ tanggalDaftar: { $gte: startOfToday } }),
+    Pasien.countDocuments({ tanggalDaftar: { $gte: startOfWeek } }),
+    Pasien.countDocuments({ tanggalDaftar: { $gte: startOfMonth } }),
+    Pasien.countDocuments(),
+    Pasien.find({ tanggalDaftar: { $gte: startOfToday } })
+      .select("nama noKartu tanggalDaftar")
+      .sort({ tanggalDaftar: -1 })
+      .lean(),
+  ]);
+
+  const recentActivity = await Pasien.aggregate([
+    { $unwind: "$logAktivitas" },
+    { $sort: { "logAktivitas.pada": -1 } },
+    { $limit: 10 },
+    {
+      $project: {
+        _id: 0,
+        type: "Pasien",
+        entityId: "$logAktivitas.oleh",
+        entityName: "$nama",
+        noKartu: "$noKartu",
+        aksi: "$logAktivitas.aksi",
+        oleh: "$logAktivitas.oleh",
+        catatan: "$logAktivitas.catatan",
+        pada: "$logAktivitas.pada",
+      },
+    },
+  ]);
+
+  res.json({
+    stats: { today, week, month, total },
+    recentPatients: todayPatients,
+    recentActivity,
+  });
+});
 
 // @route   GET api/pasien/:id/riwayat-kunjungan
 // @desc    Dapatkan riwayat konsultasi pasien berdasarkan ID pasien
-// @access  Public
-exports.getRiwayatKunjunganPasien = async (req, res) => {
-  try {
-    const konsultasi = await Konsultasi.find({ pasienId: req.params.id }).sort({
-      tanggalKonsultasi: -1,
-    });
+// @access  Private
+exports.getRiwayatKunjunganPasien = asyncHandler(async (req, res) => {
+  const konsultasi = await Konsultasi.find({ pasienId: req.params.id })
+    .sort({ tanggalKonsultasi: -1 })
+    .lean();
 
-    if (konsultasi.length === 0) {
-      return res.status(404).json({
-        message: "Riwayat kunjungan tidak ditemukan untuk pasien ini",
-      });
-    }
-    res.json(konsultasi);
-  } catch (err) {
-    console.error(err.message);
-    if (err.kind === "ObjectId") {
-      return res.status(404).json({ message: "ID pasien tidak valid" });
-    }
-    res.status(500).send("Server Error");
+  if (konsultasi.length === 0) {
+    return res.status(404).json({
+      message: "Riwayat kunjungan tidak ditemukan untuk pasien ini",
+    });
   }
-};
+  res.json(konsultasi);
+});

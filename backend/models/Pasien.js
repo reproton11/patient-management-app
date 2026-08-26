@@ -68,7 +68,6 @@ const pasienSchema = new Schema(
     },
     petugasPendaftaran: {
       type: String,
-      enum: ["Heni", "Maria", "Emy", "Aziz"],
       required: true,
     },
     logAktivitas: [logAktivitasSchema],
@@ -77,6 +76,9 @@ const pasienSchema = new Schema(
     timestamps: true, // Otomatis menambahkan createdAt dan updatedAt
   }
 );
+
+pasienSchema.index({ tanggalDaftar: -1 });
+pasienSchema.index({ nama: 1 });
 
 // Middleware untuk update terakhirDiUpdate
 pasienSchema.pre("findOneAndUpdate", function (next) {

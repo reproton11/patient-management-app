@@ -4,10 +4,9 @@ import { motion } from "framer-motion";
 import api from "../services/api";
 import Select from "react-select";
 import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import useIndonesiaRegions from "../hooks/useIndonesiaRegions"; // IMPORT HOOK BARU
+import useIndonesiaRegions from "../hooks/useIndonesiaRegions";
+import { toTitleCase } from "../utils/helpers";
 
-// Petugas Pendaftaran
 const petugasOptions = [
   { value: "Heni", label: "Heni" },
   { value: "Maria", label: "Maria" },
@@ -43,8 +42,7 @@ const RegisterPatient = () => {
     fetchDistricts,
     fetchVillages,
     loading: regionsLoading,
-    error: regionsError,
-  } = useIndonesiaRegions(); // GUNAKAN HOOK
+  } = useIndonesiaRegions();
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -137,7 +135,9 @@ const RegisterPatient = () => {
     setErrors({});
 
     try {
-      const response = await api.post("/pasien", formData);
+      // Normalisasi nama ke Title Case sebelum dikirim
+      const payload = { ...formData, nama: toTitleCase(formData.nama) };
+      const response = await api.post("/pasien", payload);
       toast.success(response.data.message);
       setFormData({
         nama: "",

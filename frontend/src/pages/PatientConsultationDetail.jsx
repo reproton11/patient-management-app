@@ -16,23 +16,13 @@ import {
   PencilIcon,
 } from "@heroicons/react/outline";
 
-// Import jspdf dan html2canvas
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+// jspdf & html2canvas di-import dinamis saat tombol cetak diklik (code splitting)
 
 import PatientMedicalRecordTemplate from "../components/PatientMedicalRecordTemplate";
 import useIndonesiaRegions from "../hooks/useIndonesiaRegions";
+import { calculateAge, toTitleCase } from "../utils/helpers";
 
-const calculateAge = (dob) => {
-  const birthDate = new Date(dob);
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const m = today.getMonth() - birthDate.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  return age;
-};
+const AUTOSAVE_DELAY_MS = 3000;
 
 const petugasOptions = [
   { value: "Heni", label: "Heni" },
@@ -41,17 +31,21 @@ const petugasOptions = [
   { value: "Aziz", label: "Aziz" },
 ];
 
+const buildSoapSnapshot = (soapForm, therapy) =>
+  JSON.stringify({ soapForm, therapy });
+
 const PatientConsultationDetail = () => {
   const { patientId } = useParams();
   const navigate = useNavigate();
 
   const [patient, setPatient] = useState(null);
-  const [allConsultations, setAllConsultations] = useState([]);
+  const [printConsultations, setPrintConsultations] = useState([]);
   const [displayedConsultations, setDisplayedConsultations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeConsultationId, setActiveConsultationId] = useState(null);
   const [isNewConsultation, setIsNewConsultation] = useState(false);
+  const [totalKonsultasi, setTotalKonsultasi] = useState(0);
 
   // Form state untuk SOAP
   const [soapForm, setSoapForm] = useState({
@@ -69,6 +63,10 @@ const PatientConsultationDetail = () => {
   const [petugasKonsultasi, setPetugasKonsultasi] = useState("");
   const [formErrors, setFormErrors] = useState({});
 
+  // Auto-save SOAP state
+  const [autoSaveStatus, setAutoSaveStatus] = useState("idle");
+  const [lastSavedAt, setLastSavedAt] = useState(null);
+
   // Upload file state (Update:Sudah dihapus dalam update fitur 25/9/2025)
 
   // Edit Patient State
@@ -78,7 +76,6 @@ const PatientConsultationDetail = () => {
   const [editPatientLoading, setEditPatientLoading] = useState(false);
   const [petugasEditPasien, setPetugasEditPasien] = useState("");
 
-  // Hook untuk data wilayah
   const {
     provinces,
     regencies,
@@ -88,7 +85,6 @@ const PatientConsultationDetail = () => {
     fetchDistricts,
     fetchVillages,
     loading: regionsLoading,
-    error: regionsError,
   } = useIndonesiaRegions();
 
   // Untuk riwayat kunjungan (pagination)
@@ -102,26 +98,107 @@ const PatientConsultationDetail = () => {
   // state untuk print layout
   const [isPrintLayoutVisible, setIsPrintLayoutVisible] = useState(false);
 
+  // === Auto-save SOAP (debounce 3 detik setelah berhenti mengetik) ===
+  const soapBaselineRef = useRef("");
+  const soapStateRef = useRef({ soapForm, therapy });
+  soapStateRef.current = { soapForm, therapy };
+  const activeIdRef = useRef(activeConsultationId);
+  activeIdRef.current = activeConsultationId;
+  const savingRef = useRef(false);
+  const pendingSaveRef = useRef(false);
+
+  const performAutoSave = useCallback(async () => {
+    if (savingRef.current) {
+      pendingSaveRef.current = true;
+      return;
+    }
+    const konsulId = activeIdRef.current;
+    if (!konsulId || isNewConsultation) return;
+
+    const current = soapStateRef.current;
+    const snapshot = buildSoapSnapshot(current.soapForm, current.therapy);
+    if (snapshot === soapBaselineRef.current) {
+      setAutoSaveStatus("idle");
+      return;
+    }
+
+    savingRef.current = true;
+    setAutoSaveStatus("saving");
+    try {
+      await api.put(`/konsultasi/${konsulId}`, {
+        pasienId: patientId,
+        soap: current.soapForm,
+        therapy: current.therapy,
+      });
+      if (activeIdRef.current === konsulId) {
+        soapBaselineRef.current = snapshot;
+        setLastSavedAt(new Date());
+        setAutoSaveStatus("saved");
+      }
+    } catch (err) {
+      console.error("Autosave gagal:", err);
+      if (activeIdRef.current === konsulId) {
+        setAutoSaveStatus("error");
+        toast.error("Auto-save gagal. Klik Simpan untuk mencoba lagi.");
+      }
+    } finally {
+      savingRef.current = false;
+      if (pendingSaveRef.current) {
+        pendingSaveRef.current = false;
+        performAutoSave();
+      }
+    }
+  }, [patientId, isNewConsultation]);
+
+  useEffect(() => {
+    if (isNewConsultation || !activeConsultationId || !patient) return;
+
+    const snapshot = buildSoapSnapshot(soapForm, therapy);
+    if (snapshot === soapBaselineRef.current) return;
+
+    setAutoSaveStatus("dirty");
+    const timer = setTimeout(() => {
+      performAutoSave();
+    }, AUTOSAVE_DELAY_MS);
+
+    return () => clearTimeout(timer);
+  }, [soapForm, therapy, isNewConsultation, activeConsultationId, patient, performAutoSave]);
+
   // Pindahkan deklarasi fungsi-fungsi ini ke ATAS, sebelum `fetchPatientData`
   const fillFormWithConsultationData = useCallback((consultation) => {
     setSoapForm({
-      S: consultation.soap.S || "",
+      S: consultation.soap?.S || "",
       O: {
-        tensi: consultation.soap.O.tensi || { sistolik: "", diastolik: "" },
-        tinggiBadan: consultation.soap.O.tinggiBadan || "",
-        beratBadan: consultation.soap.O.beratBadan || "",
-        tambahan: consultation.soap.O.tambahan || "",
+        tensi: consultation.soap?.O?.tensi || { sistolik: "", diastolik: "" },
+        tinggiBadan: consultation.soap?.O?.tinggiBadan || "",
+        beratBadan: consultation.soap?.O?.beratBadan || "",
+        tambahan: consultation.soap?.O?.tambahan || "",
       },
-      A: consultation.soap.A || "",
-      P: consultation.soap.P || "",
+      A: consultation.soap?.A || "",
+      P: consultation.soap?.P || "",
     });
     setTherapy(consultation.therapy || "");
     setPetugasKonsultasi(consultation.petugasKonsultasi || "");
     setFormErrors({});
+    soapBaselineRef.current = buildSoapSnapshot(
+      {
+        S: consultation.soap?.S || "",
+        O: {
+          tensi: consultation.soap?.O?.tensi || { sistolik: "", diastolik: "" },
+          tinggiBadan: consultation.soap?.O?.tinggiBadan || "",
+          beratBadan: consultation.soap?.O?.beratBadan || "",
+          tambahan: consultation.soap?.O?.tambahan || "",
+        },
+        A: consultation.soap?.A || "",
+        P: consultation.soap?.P || "",
+      },
+      consultation.therapy || ""
+    );
+    setAutoSaveStatus("idle");
   }, []);
 
   const resetFormForNewConsultation = useCallback((patientData) => {
-    setSoapForm({
+    const emptyForm = {
       S: "",
       O: {
         tensi: patientData.tensi || { sistolik: "", diastolik: "" },
@@ -131,22 +208,44 @@ const PatientConsultationDetail = () => {
       },
       A: "",
       P: "",
-    });
+    };
+    setSoapForm(emptyForm);
     setTherapy("");
     setPetugasKonsultasi("");
     setFormErrors({});
     setIsNewConsultation(true);
     setActiveConsultationId(null);
+    soapBaselineRef.current = buildSoapSnapshot(emptyForm, "");
+    setAutoSaveStatus("idle");
   }, []);
 
-  // === Mulai Pemindahan handleGeneratePdf ke sini ===
+  // === Mulai handleGeneratePdf (jspdf & html2canvas dimuat on-demand) ===
   const handleGeneratePdf = useCallback(async () => {
-    if (!patient || !allConsultations) {
+    if (!patient) {
       toast.error("Data pasien belum lengkap untuk dicetak.");
       return;
     }
 
-    setLoading(true); // Tampilkan loading
+    setLoading(true);
+    try {
+      // Ambil seluruh riwayat konsultasi hanya saat cetak
+      let consultations = [];
+      try {
+        const res = await api.get(`/konsultasi/pasien/${patientId}`, {
+          params: { limit: 100 },
+        });
+        consultations = res.data.konsultasi || [];
+      } catch (err) {
+        if (err.response?.status !== 404) throw err;
+      }
+      setPrintConsultations(consultations);
+    } catch (err) {
+      console.error("Error fetching consultations for print:", err);
+      toast.error("Gagal memuat riwayat konsultasi untuk cetak.");
+      setLoading(false);
+      return;
+    }
+
     setIsPrintLayoutVisible(true); // Render komponen cetak agar bisa ditangkap html2canvas
 
     // Beri waktu React untuk merender komponen ke DOM
@@ -161,11 +260,16 @@ const PatientConsultationDetail = () => {
         return;
       }
 
+      const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+        import("jspdf"),
+        import("html2canvas"),
+      ]);
+
       const element = componentRef.current;
       const canvas = await html2canvas(element, {
         scale: 2, // Peningkatan resolusi untuk kualitas PDF yang lebih baik
         useCORS: true, // Penting jika ada gambar dari domain lain (misal logo)
-        logging: true, // Untuk debugging html2canvas
+        logging: false,
       });
 
       const imgData = canvas.toDataURL("image/png");
@@ -197,8 +301,8 @@ const PatientConsultationDetail = () => {
       setLoading(false);
       setIsPrintLayoutVisible(false); // Sembunyikan kembali komponen cetak
     }
-  }, [patient, allConsultations]);
-  // === Akhir Pemindahan handleGeneratePdf ===
+  }, [patient, patientId]);
+  // === Akhir handleGeneratePdf ===
 
   const fetchPatientData = useCallback(async () => {
     try {
@@ -221,46 +325,39 @@ const PatientConsultationDetail = () => {
         petugasPendaftaran: patientData.petugasPendaftaran,
       });
 
-      // Fetch ALL consultations for this patient for printing
-      const allConsultationsRes = await api.get(
-        `/konsultasi/pasien/${patientId}`,
-        {
-          params: { limit: 9999 },
-        }
-      );
-      setAllConsultations(allConsultationsRes.data.konsultasi);
-
       // Fetch PAGINATED consultations for UI display
-      const paginatedConsultationsRes = await api.get(
-        `/konsultasi/pasien/${patientId}`,
-        {
-          params: { page: currentPage, limit: ITEMS_PER_PAGE },
-        }
-      );
-      setDisplayedConsultations(paginatedConsultationsRes.data.konsultasi);
-      setTotalPages(paginatedConsultationsRes.data.totalPages);
+      let paginatedData = {
+        konsultasi: [],
+        totalItems: 0,
+        totalPages: 1,
+      };
+      try {
+        const paginatedConsultationsRes = await api.get(
+          `/konsultasi/pasien/${patientId}`,
+          {
+            params: { page: currentPage, limit: ITEMS_PER_PAGE },
+          }
+        );
+        paginatedData = paginatedConsultationsRes.data;
+      } catch (err) {
+        if (err.response?.status !== 404) throw err;
+      }
+
+      setDisplayedConsultations(paginatedData.konsultasi || []);
+      setTotalPages(paginatedData.totalPages || 1);
+      setTotalKonsultasi(paginatedData.totalItems || 0);
 
       // Logic untuk menentukan konsultasi aktif
       // Jika kita sedang dalam mode 'konsultasi baru', jangan override
       // Jika bukan mode baru dan ada konsultasi, set yang terbaru sebagai aktif
-      if (
-        !isNewConsultation &&
-        paginatedConsultationsRes.data.konsultasi.length > 0
-      ) {
-        setActiveConsultationId(
-          paginatedConsultationsRes.data.konsultasi[0]._id
-        );
-        fillFormWithConsultationData(
-          paginatedConsultationsRes.data.konsultasi[0]
-        );
-      } else if (
-        isNewConsultation &&
-        paginatedConsultationsRes.data.konsultasi.length === 0
-      ) {
+      if (!isNewConsultation && paginatedData.konsultasi.length > 0) {
+        setActiveConsultationId(paginatedData.konsultasi[0]._id);
+        fillFormWithConsultationData(paginatedData.konsultasi[0]);
+      } else if (isNewConsultation && paginatedData.konsultasi.length === 0) {
         // Jika sedang mode baru, tapi ternyata tidak ada konsultasi sama sekali,
         // maka set up form kosong dengan data awal pasien
         resetFormForNewConsultation(patientRes.data);
-      } else if (paginatedConsultationsRes.data.konsultasi.length === 0) {
+      } else if (paginatedData.konsultasi.length === 0) {
         // Jika tidak ada konsultasi sama sekali, bahkan sebelum klik "Mulai Konsultasi Baru"
         resetFormForNewConsultation(patientRes.data);
         setIsNewConsultation(true); // Pastikan ini juga diatur ke true
@@ -383,6 +480,10 @@ const PatientConsultationDetail = () => {
   };
 
   const handleSaveConsultation = async () => {
+    if (!petugasKonsultasi) {
+      toast.error("Petugas konsultasi wajib dipilih.");
+      return;
+    }
     setLoading(true);
     setFormErrors({});
     try {
@@ -393,17 +494,16 @@ const PatientConsultationDetail = () => {
         petugasKonsultasi,
       };
 
-      let res;
       if (isNewConsultation) {
-        res = await api.post("/konsultasi", dataToSave);
+        await api.post("/konsultasi", dataToSave);
         toast.success("Konsultasi baru berhasil ditambahkan!");
       } else {
-        res = await api.put(`/konsultasi/${activeConsultationId}`, {
-          ...dataToSave,
-          petugasUpdate: petugasKonsultasi,
-        });
+        await api.put(`/konsultasi/${activeConsultationId}`, dataToSave);
         toast.success("Konsultasi berhasil diupdate!");
       }
+      soapBaselineRef.current = buildSoapSnapshot(soapForm, therapy);
+      setLastSavedAt(new Date());
+      setAutoSaveStatus("saved");
       setIsNewConsultation(false);
       // Setelah simpan, refresh data pasien dan konsultasi
       fetchPatientData();
@@ -446,7 +546,6 @@ const PatientConsultationDetail = () => {
       tensi: patientData.tensi || { sistolik: "", diastolik: "" },
       tinggiBadan: patientData.tinggiBadan || "",
       beratBadan: patientData.beratBadan || "",
-      petugasPendaftaran: patientData.petugasPendaftaran,
     });
     setPetugasEditPasien("");
     setEditPatientErrors({});
@@ -509,17 +608,18 @@ const PatientConsultationDetail = () => {
 
   const handleUpdatePatient = async () => {
     if (!petugasEditPasien) {
-      toast.error("Nama petugas yang mengedit wajib diisi.");
+      toast.error("Petugas yang mengedit wajib dipilih.");
       return;
     }
     setEditPatientLoading(true);
     setEditPatientErrors({});
     try {
-      const dataToUpdate = {
+      const payload = {
         ...editPatientForm,
-        petugasUpdate: petugasEditPasien,
+        nama: editPatientForm.nama ? toTitleCase(editPatientForm.nama) : "",
+        petugasPendaftaran: petugasEditPasien,
       };
-      const res = await api.put(`/pasien/${patientId}`, dataToUpdate);
+      await api.put(`/pasien/${patientId}`, payload);
       toast.success("Data pasien berhasil diupdate!");
       closeEditPatientModal();
       fetchPatientData();
@@ -590,12 +690,7 @@ const PatientConsultationDetail = () => {
             <button
               onClick={handleGeneratePdf} // Panggil fungsi generate PDF yang baru
               className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200"
-              disabled={
-                !patient ||
-                loading ||
-                !allConsultations ||
-                allConsultations.length === 0
-              }
+              disabled={!patient || loading || totalKonsultasi === 0}
             >
               <PrinterIcon className="h-5 w-5 mr-2" />
               Cetak Rekam Medis
@@ -639,26 +734,35 @@ const PatientConsultationDetail = () => {
           <div>
             <p className="font-medium">Alamat:</p>
             <p>
-              {patient.alamat.kelurahan}, {patient.alamat.kecamatan},{" "}
-              {patient.alamat.kabupaten}, {patient.alamat.provinsi}
+              {patient.alamat
+                ? `${patient.alamat.kelurahan || "-"}, ${
+                    patient.alamat.kecamatan || "-"
+                  }, ${patient.alamat.kabupaten || "-"}, ${
+                    patient.alamat.provinsi || "-"
+                  }`
+                : "-"}
             </p>
           </div>
           <div>
             <p className="font-medium">Tgl. Daftar:</p>
             <p>
-              {format(new Date(patient.tanggalDaftar), "dd MMMM yyyy, HH:mm", {
-                locale: id,
-              })}
+              {patient.tanggalDaftar
+                ? format(new Date(patient.tanggalDaftar), "dd MMMM yyyy, HH:mm", {
+                    locale: id,
+                  })
+                : "-"}
             </p>
           </div>
           <div>
             <p className="font-medium">Terakhir di Update:</p>
             <p>
-              {format(
-                new Date(patient.terakhirDiUpdate),
-                "dd MMMM yyyy, HH:mm",
-                { locale: id }
-              )}
+              {patient.terakhirDiUpdate
+                ? format(
+                    new Date(patient.terakhirDiUpdate),
+                    "dd MMMM yyyy, HH:mm",
+                    { locale: id }
+                  )
+                : "-"}
             </p>
           </div>
         </div>
@@ -726,7 +830,7 @@ const PatientConsultationDetail = () => {
                   disabled={currentPage === 1}
                   className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Previous
+                  Sebelumnya
                 </button>
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(
                   (page) => (
@@ -750,7 +854,7 @@ const PatientConsultationDetail = () => {
                   disabled={currentPage === totalPages}
                   className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Next
+                  Berikutnya
                 </button>
               </nav>
             </div>
@@ -764,11 +868,22 @@ const PatientConsultationDetail = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b pb-3">
-            {isNewConsultation
-              ? "Konsultasi Baru"
-              : `Detail Konsultasi #${activeConsultation?._id?.slice(-5)}`}
-          </h2>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4 pb-3 border-b">
+            <h2 className="text-2xl font-semibold text-gray-800">
+              {isNewConsultation
+                ? "Konsultasi Baru"
+                : `Detail Konsultasi #${activeConsultation?._id?.slice(-5)}`}
+            </h2>
+            <AutoSaveIndicator status={autoSaveStatus} lastSavedAt={lastSavedAt} />
+          </div>
+
+          {isNewConsultation && (
+            <p className="mb-4 text-sm text-blue-700 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+              Konsultasi baru perlu disimpan manual sekali dengan tombol Simpan.
+              Setelah tersimpan, perubahan akan ter-auto-save otomatis 3 detik
+              setelah berhenti mengetik.
+            </p>
+          )}
 
           <div className="space-y-4">
             {/* Subjective */}
@@ -1003,7 +1118,7 @@ const PatientConsultationDetail = () => {
               )}
             </div>
 
-            {/* Petugas Konsultasi */}
+            {/* Petugas Konsultasi (dipilih manual, terkunci setelah tersimpan) */}
             <div>
               <label
                 htmlFor="petugasKonsultasi"
@@ -1029,11 +1144,16 @@ const PatientConsultationDetail = () => {
                 classNamePrefix="react-select"
                 placeholder="Pilih Petugas Konsultasi"
                 isClearable
-                required
+                required={isNewConsultation}
               />
               {formErrors.petugasKonsultasi && (
                 <p className="mt-1 text-sm text-red-500">
                   {formErrors.petugasKonsultasi}
+                </p>
+              )}
+              {!isNewConsultation && (
+                <p className="mt-1 text-xs text-gray-400">
+                  Perubahan petugas hanya berlaku melalui tombol Simpan.
                 </p>
               )}
             </div>
@@ -1477,7 +1597,7 @@ const PatientConsultationDetail = () => {
                 </div>
               </div>
 
-              {/* Petugas Edit */}
+              {/* Petugas yang Mengedit */}
               <div>
                 <label
                   htmlFor="petugasEditPasien"
@@ -1497,19 +1617,11 @@ const PatientConsultationDetail = () => {
                       (opt) => opt.value === petugasEditPasien
                     ) || null
                   }
-                  className={`mt-1 block w-full ${
-                    editPatientErrors.petugasEditPasien ? "border-red-500" : ""
-                  }`}
                   classNamePrefix="react-select"
                   placeholder="Pilih Petugas"
                   isClearable
                   required
                 />
-                {editPatientErrors.petugasEditPasien && (
-                  <p className="mt-1 text-sm text-red-500">
-                    {editPatientErrors.petugasEditPasien}
-                  </p>
-                )}
               </div>
 
               <div className="mt-6 flex justify-end gap-3">
@@ -1557,12 +1669,38 @@ const PatientConsultationDetail = () => {
           <PatientMedicalRecordTemplate
             ref={componentRef}
             patient={patient}
-            consultations={allConsultations}
+            consultations={printConsultations}
           />
         </div>
       )}
     </motion.div>
   );
+};
+
+const AutoSaveIndicator = ({ status, lastSavedAt }) => {
+  const base = "text-xs font-medium inline-flex items-center gap-1.5";
+  switch (status) {
+    case "dirty":
+      return <span className={`${base} text-gray-400`}>Perubahan belum disimpan...</span>;
+    case "saving":
+      return (
+        <span className={`${base} text-blue-600`} data-testid="autosave-saving">
+          <span className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></span>
+          Menyimpan...
+        </span>
+      );
+    case "saved":
+      return (
+        <span className={`${base} text-green-600`} data-testid="autosave-saved">
+          ✓ Tersimpan
+          {lastSavedAt ? ` ${format(lastSavedAt, "HH:mm")}` : ""}
+        </span>
+      );
+    case "error":
+      return <span className={`${base} text-red-600`}>Auto-save gagal</span>;
+    default:
+      return null;
+  }
 };
 
 export default PatientConsultationDetail;

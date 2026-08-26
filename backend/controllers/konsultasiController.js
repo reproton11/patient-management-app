@@ -1,252 +1,211 @@
 const Konsultasi = require("../models/Konsultasi");
 const Pasien = require("../models/Pasien");
 const Joi = require("@hapi/joi");
-const mongoose = require("mongoose");
-const { VALID_PETUGAS, VALIDATION_CONFIG } = require("../constants");
+const asyncHandler = require("../middlewares/asyncHandler");
+const { VALID_PETUGAS, VALIDATION_CONFIG, PAGINATION_CONFIG } = require(
+  "../constants"
+);
 
-// Schema validasi Joi untuk konsultasi
-const konsultasiSchema = Joi.object({
+const soapField = Joi.object({
+  S: Joi.string().allow("").optional(),
+  O: Joi.object({
+    tensi: Joi.object({
+      sistolik: Joi.number()
+        .min(VALIDATION_CONFIG.TENSISISTOLIK_MIN)
+        .max(VALIDATION_CONFIG.TENSISISTOLIK_MAX)
+        .allow(null)
+        .optional(),
+      diastolik: Joi.number()
+        .min(VALIDATION_CONFIG.TENSIDIASTOLIK_MIN)
+        .max(VALIDATION_CONFIG.TENSIDIASTOLIK_MAX)
+        .allow(null)
+        .optional(),
+    }).optional(),
+    tinggiBadan: Joi.number()
+      .min(VALIDATION_CONFIG.TINGGI_BADAN_MIN)
+      .max(VALIDATION_CONFIG.TINGGI_BADAN_MAX)
+      .allow(null)
+      .optional(),
+    beratBadan: Joi.number()
+      .min(VALIDATION_CONFIG.BERAT_BADAN_MIN)
+      .max(VALIDATION_CONFIG.BERAT_BADAN_MAX)
+      .allow(null)
+      .optional(),
+    tambahan: Joi.string().allow("").max(2000).optional(),
+  }).optional(),
+  A: Joi.string().allow("").max(2000).optional(),
+  P: Joi.string().allow("").max(2000).optional(),
+});
+
+const therapyField = Joi.string().allow("").max(2000).optional();
+
+const petugasKonsultasiField = Joi.string()
+  .valid(...VALID_PETUGAS)
+  .messages({
+    "any.only": "Petugas konsultasi tidak valid",
+  });
+
+// Schema untuk pembuatan konsultasi baru (petugas wajib)
+const konsultasiCreateSchema = Joi.object({
   pasienId: Joi.string().required().messages({
     "any.required": "ID Pasien wajib diisi",
   }),
-  soap: Joi.object({
-    S: Joi.string().allow("").optional(),
-    O: Joi.object({
-      tensi: Joi.object({
-        sistolik: Joi.number()
-          .min(VALIDATION_CONFIG.TENSISISTOLIK_MIN)
-          .max(VALIDATION_CONFIG.TENSISISTOLIK_MAX)
-          .allow(null)
-          .optional(),
-        diastolik: Joi.number()
-          .min(VALIDATION_CONFIG.TENSIDIASTOLIK_MIN)
-          .max(VALIDATION_CONFIG.TENSIDIASTOLIK_MAX)
-          .allow(null)
-          .optional(),
-      }).optional(),
-      tinggiBadan: Joi.number()
-        .min(VALIDATION_CONFIG.TINGGI_BADAN_MIN)
-        .max(VALIDATION_CONFIG.TINGGI_BADAN_MAX)
-        .allow(null)
-        .optional(),
-      beratBadan: Joi.number()
-        .min(VALIDATION_CONFIG.BERAT_BADAN_MIN)
-        .max(VALIDATION_CONFIG.BERAT_BADAN_MAX)
-        .allow(null)
-        .optional(),
-      tambahan: Joi.string().allow("").optional(),
-    }).optional(),
-    A: Joi.string().allow("").optional(),
-    P: Joi.string().allow("").optional(),
-  }).required(),
-  therapy: Joi.string().allow("").optional(),
-  petugasKonsultasi: Joi.string()
-    .valid(...VALID_PETUGAS)
+  soap: soapField.required(),
+  therapy: therapyField,
+  petugasKonsultasi: petugasKonsultasiField
     .required()
     .messages({
       "any.required": "Petugas konsultasi wajib diisi",
-      "any.only": "Petugas konsultasi tidak valid",
     }),
-  // files tidak divalidasi di sini, tapi di multer middleware
+});
+
+// Schema untuk update: petugasKonsultasi opsional.
+// Jika tidak dikirim (mis. auto-save), nilai lama di database dipertahankan.
+const konsultasiUpdateSchema = Joi.object({
+  soap: soapField.optional(),
+  therapy: therapyField,
+  petugasKonsultasi: petugasKonsultasiField.optional(),
 });
 
 // @route   POST api/konsultasi
 // @desc    Buat entri konsultasi baru
-// @access  Public
-exports.createKonsultasi = async (req, res) => {
-  try {
-    const { error, value } = konsultasiSchema.validate(req.body, {
-      abortEarly: false,
+// @access  Private
+exports.createKonsultasi = asyncHandler(async (req, res) => {
+  const { error, value } = konsultasiCreateSchema.validate(req.body, {
+    abortEarly: false,
+  });
+  if (error) {
+    return res.status(400).json({
+      message: "Validasi gagal",
+      errors: error.details.map((err) => ({
+        field: err.path.join("."),
+        message: err.message,
+      })),
     });
-    if (error) {
-      return res.status(400).json({
-        message: "Validasi gagal",
-        errors: error.details.map((err) => ({
-          field: err.path.join("."),
-          message: err.message,
-        })),
-      });
-    }
-
-    // Pastikan pasienId valid
-    const pasien = await Pasien.findById(value.pasienId);
-    if (!pasien) {
-      return res.status(404).json({ message: "Pasien tidak ditemukan" });
-    }
-
-    const newKonsultasi = new Konsultasi(value);
-    const konsultasi = await newKonsultasi.save();
-
-    // Log aktivitas
-    pasien.logAktivitas.push({
-      aksi: "CREATE_KONSULTASI",
-      oleh: value.petugasKonsultasi,
-      catatan: `Konsultasi baru dibuat (ID Konsultasi: ${konsultasi._id})`,
-    });
-    await pasien.save();
-
-    res.status(201).json({ message: "Konsultasi berhasil dibuat", konsultasi });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server Error");
   }
-};
+
+  const pasien = await Pasien.findById(value.pasienId);
+  if (!pasien) {
+    return res.status(404).json({ message: "Pasien tidak ditemukan" });
+  }
+
+  const newKonsultasi = new Konsultasi(value);
+  const konsultasi = await newKonsultasi.save();
+
+  await Pasien.findByIdAndUpdate(value.pasienId, {
+    $push: {
+      logAktivitas: {
+        aksi: "CREATE_KONSULTASI",
+        oleh: value.petugasKonsultasi,
+        catatan: `Konsultasi baru dibuat (ID Konsultasi: ${konsultasi._id})`,
+      },
+    },
+  });
+
+  res.status(201).json({ message: "Konsultasi berhasil dibuat", konsultasi });
+});
 
 // @route   GET api/konsultasi/:id
 // @desc    Dapatkan detail konsultasi
-// @access  Public
-exports.getKonsultasiById = async (req, res) => {
-  try {
-    const konsultasi = await Konsultasi.findById(req.params.id).populate(
-      "pasienId",
-      "nama noKartu"
-    ); // Populasikan data pasien
-    if (!konsultasi) {
-      return res.status(404).json({ message: "Konsultasi tidak ditemukan" });
-    }
-    res.json(konsultasi);
-  } catch (err) {
-    console.error(err.message);
-    if (err.kind === "ObjectId") {
-      return res.status(404).json({ message: "Konsultasi tidak ditemukan" });
-    }
-    res.status(500).send("Server Error");
+// @access  Private
+exports.getKonsultasiById = asyncHandler(async (req, res) => {
+  const konsultasi = await Konsultasi.findById(req.params.id).populate(
+    "pasienId",
+    "nama noKartu"
+  );
+  if (!konsultasi) {
+    return res.status(404).json({ message: "Konsultasi tidak ditemukan" });
   }
-};
+  res.json(konsultasi);
+});
 
 // @route   GET api/konsultasi/pasien/:pasienId
 // @desc    Dapatkan semua konsultasi untuk pasien tertentu
-// @access  Public
-exports.getKonsultasiByPasienId = async (req, res) => {
-  const { page = 1, limit = 10 } = req.query;
-  try {
-    const options = {
-      page: parseInt(page, 10),
-      limit: parseInt(limit, 10),
-      sort: { tanggalKonsultasi: -1 },
-    };
-    const result = await Konsultasi.paginate(
-      { pasienId: req.params.pasienId },
-      options
-    );
+// @access  Private
+exports.getKonsultasiByPasienId = asyncHandler(async (req, res) => {
+  const page = Math.max(parseInt(req.query.page, 10) || PAGINATION_CONFIG.DEFAULT_PAGE, 1);
+  const requestedLimit = parseInt(req.query.limit, 10) || PAGINATION_CONFIG.DEFAULT_LIMIT;
+  const limit = Math.min(requestedLimit, PAGINATION_CONFIG.MAX_LIMIT);
 
-    if (result.docs.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "Tidak ada riwayat konsultasi untuk pasien ini" });
-    }
-    res.json({
-      konsultasi: result.docs,
-      totalItems: result.totalDocs,
-      totalPages: result.totalPages,
-      currentPage: result.page,
-    });
-  } catch (err) {
-    console.error(err.message);
-    if (err.kind === "ObjectId") {
-      return res.status(404).json({ message: "ID Pasien tidak valid" });
-    }
-    res.status(500).send("Server Error");
+  const result = await Konsultasi.paginate(
+    { pasienId: req.params.pasienId },
+    { page, limit, sort: { tanggalKonsultasi: -1 } }
+  );
+
+  if (result.docs.length === 0) {
+    return res
+      .status(404)
+      .json({ message: "Tidak ada riwayat konsultasi untuk pasien ini" });
   }
-};
+  res.json({
+    konsultasi: result.docs,
+    totalItems: result.totalDocs,
+    totalPages: result.totalPages,
+    currentPage: result.page,
+  });
+});
 
 // @route   PUT api/konsultasi/:id
 // @desc    Update entri konsultasi
-// @access  Public
-exports.updateKonsultasi = async (req, res) => {
-  const { petugasUpdate } = req.body;
-  if (!petugasUpdate) {
-    return res
-      .status(400)
-      .json({ message: "Nama petugas yang melakukan update diperlukan." });
+// @access  Private
+exports.updateKonsultasi = asyncHandler(async (req, res) => {
+  const { error, value } = konsultasiUpdateSchema.validate(req.body, {
+    abortEarly: false,
+    allowUnknown: true,
+  });
+  if (error) {
+    return res.status(400).json({
+      message: "Validasi gagal",
+      errors: error.details.map((err) => ({
+        field: err.path.join("."),
+        message: err.message,
+      })),
+    });
   }
 
-  try {
-    const { error, value } = konsultasiSchema.validate(req.body, {
-      abortEarly: false,
-      allowUnknown: true,
-    });
-    if (error) {
-      return res.status(400).json({
-        message: "Validasi gagal",
-        errors: error.details.map((err) => ({
-          field: err.path.join("."),
-          message: err.message,
-        })),
-      });
-    }
+  const konsultasiLama = await Konsultasi.findById(req.params.id);
+  if (!konsultasiLama) {
+    return res.status(404).json({ message: "Konsultasi tidak ditemukan" });
+  }
 
-    const konsultasiLama = await Konsultasi.findById(req.params.id);
-    if (!konsultasiLama) {
-      return res.status(404).json({ message: "Konsultasi tidak ditemukan" });
-    }
-
-    // Bangun catatan log perubahan
-    const changes = [];
-    // Ini bisa menjadi sangat kompleks jika membandingkan objek nested seperti SOAP.
-    // Untuk sederhana, kita bisa log bahwa konsultasi diupdate.
-    // Jika perlu detail, harus iterasi setiap field SOAP
-    changes.push(`Konsultasi ID ${req.params.id} diupdate`);
-
-    const updatedKonsultasi = await Konsultasi.findByIdAndUpdate(
-      req.params.id,
-      {
-        ...value,
-        $push: {
-          logAktivitas: {
-            aksi: "UPDATE",
-            oleh: petugasUpdate,
-            catatan: `Data konsultasi diupdate oleh ${petugasUpdate}`, // Contoh sederhana
-          },
+  const updatedKonsultasi = await Konsultasi.findByIdAndUpdate(
+    req.params.id,
+    {
+      ...value,
+      $push: {
+        logAktivitas: {
+          aksi: "UPDATE",
+          oleh: value.petugasKonsultasi || req.user.nama,
+          catatan: `Data konsultasi diupdate oleh ${
+            value.petugasKonsultasi || req.user.nama
+          }`,
         },
-        updatedAt: new Date(), // Mongoose timestamps akan otomatis, tapi bisa diset manual
       },
-      { new: true, runValidators: true }
-    );
+    },
+    { new: true, runValidators: true }
+  );
 
-    res.json({
-      message: "Konsultasi berhasil diupdate",
-      konsultasi: updatedKonsultasi,
-    });
-  } catch (err) {
-    console.error(err.message);
-    if (err.kind === "ObjectId") {
-      return res.status(404).json({ message: "Konsultasi tidak ditemukan" });
-    }
-    res.status(500).send("Server Error");
-  }
-};
+  res.json({
+    message: "Konsultasi berhasil diupdate",
+    konsultasi: updatedKonsultasi,
+  });
+});
 
 // @route   DELETE api/konsultasi/:id
 // @desc    Hapus entri konsultasi
-// @access  Public
-exports.deleteKonsultasi = async (req, res) => {
-  const { petugasPenghapus } = req.body;
-  if (!petugasPenghapus) {
-    return res
-      .status(400)
-      .json({ message: "Nama petugas yang melakukan penghapusan diperlukan." });
+// @access  Private
+exports.deleteKonsultasi = asyncHandler(async (req, res) => {
+  const konsultasi = await Konsultasi.findById(req.params.id);
+
+  if (!konsultasi) {
+    return res.status(404).json({ message: "Konsultasi tidak ditemukan" });
   }
 
-  try {
-    const konsultasi = await Konsultasi.findById(req.params.id);
+  await Konsultasi.findByIdAndDelete(req.params.id);
 
-    if (!konsultasi) {
-      return res.status(404).json({ message: "Konsultasi tidak ditemukan" });
-    }
+  console.log(
+    `Konsultasi dengan ID ${req.params.id} dihapus oleh ${req.user.nama}.`
+  );
 
-    await Konsultasi.findByIdAndDelete(req.params.id);
-
-    console.log(
-      `Konsultasi dengan ID ${req.params.id} dihapus oleh ${petugasPenghapus}.`
-    );
-
-    res.json({ message: "Konsultasi berhasil dihapus" });
-  } catch (err) {
-    console.error(err.message);
-    if (err.kind === "ObjectId") {
-      return res.status(404).json({ message: "Konsultasi tidak ditemukan" });
-    }
-    res.status(500).send("Server Error");
-  }
-};
+  res.json({ message: "Konsultasi berhasil dihapus" });
+});

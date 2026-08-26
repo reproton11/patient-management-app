@@ -1,7 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const analyticsController = require("../controllers/analyticsController");
+const auth = require("../middlewares/auth");
+const { getAnalyticsSummary } = require("../controllers/analyticsController");
 
-router.get("/summary", analyticsController.getAnalyticsSummary);
+router.use(auth);
+
+// @route   GET api/analytics/summary
+router.get("/summary", getAnalyticsSummary);
 
 module.exports = router;

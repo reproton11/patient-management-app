@@ -1,101 +1,109 @@
-// Memuat variabel lingkungan dari file .env
 require("dotenv").config();
 
-// Mengimpor modul yang diperlukan
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 
-// Membuat instance aplikasi Express
 const app = express();
 
-// Mengambil PORT dari environment variables (disuntikkan oleh Railway)
-// Jika tidak ada, fallback ke port 3000 (untuk development lokal)
+// Railway/Vercel menghantarkan request lewat proxy - agar rate-limit & req.ip
+// membaca IP klien asli dari X-Forwarded-For (hop pertama yang dipercaya)
+app.set("trust proxy", 1);
+
 const PORT = process.env.PORT || 3000;
 
-// Mengambil URI koneksi MongoDB dari environment variables
 const MONGO_URI = process.env.MONGO_URI;
 
-// Mengambil Origin yang diizinkan untuk CORS dari environment variables
-// Jika tidak ada, default ke '*' (mengizinkan semua origin, hanya untuk debugging/development awal)
-const CORS_ORIGIN = process.env.CORS_ORIGIN;
+// Origin yang diizinkan dari env, dipisah koma.
+// Tanpa CORS_ORIGIN, semua origin diizinkan (hanya untuk development).
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim())
+  : true;
 
-// Konfigurasi CORS (Cross-Origin Resource Sharing)
-// Ini memungkinkan frontend Anda (yang berada di domain berbeda) untuk berkomunikasi dengan backend
 const corsOptions = {
-  // origin bisa berupa string tunggal, array string, atau fungsi
-  // jika CORS_ORIGIN disetel (misal: "https://your-frontend.vercel.app"), maka itu yang diizinkan.
-  // jika CORS_ORIGIN memiliki beberapa domain dipisahkan koma (misal: "domA,domB"), maka array akan dibuat.
-  // jika tidak disetel, default ke '*' (SEMUA origin diizinkan - TIDAK AMAN UNTUK PRODUKSI)
-  origin: CORS_ORIGIN ? CORS_ORIGIN.split(",") : "*",
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // Metode HTTP yang diizinkan
-  credentials: true, // Izinkan pengiriman cookies, header otorisasi, dll.
-  optionsSuccessStatus: 204, // Status untuk preflight request OPTIONS
+  origin: allowedOrigins,
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
 };
-app.use(cors(corsOptions)); // Mengaktifkan CORS untuk semua rute
 
-// Middleware untuk mengurai body permintaan dalam format JSON
-// Ini penting agar Anda bisa menerima data JSON dari frontend (misal: saat mendaftar pasien)
-app.use(express.json());
-
-// Middleware untuk mengurai body permintaan dalam format URL-encoded
-// (extended: true memungkinkan penguraian objek dan array bersarang)
+app.use(helmet());
+app.use(cors(corsOptions));
+app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-// Koneksi ke MongoDB menggunakan Mongoose
+// Rate limit global untuk seluruh /api
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 500,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Terlalu banyak permintaan, coba lagi nanti." },
+});
+
+// Rate limit ketat khusus login
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    message: "Terlalu banyak percobaan login. Coba lagi dalam 15 menit.",
+  },
+});
+
 mongoose
   .connect(MONGO_URI)
-  .then(() => console.log("MongoDB Connected successfully!")) // Log sukses koneksi
+  .then(() => console.log("MongoDB Connected successfully!"))
   .catch((err) => {
-    // Log error koneksi database secara detail
     console.error("Failed to connect to MongoDB:", err.message);
-    // Jika koneksi DB gagal, aplikasi mungkin tidak bisa berfungsi.
-    // Opsional: Anda bisa memilih untuk menghentikan aplikasi di sini
-    // process.exit(1);
   });
 
-// Mengimpor modul rute yang telah kita buat (Update:Sudah dihapus dalam update fitur 25/9/2025)
 const pasienRoutes = require("./routes/pasienRoutes");
 const konsultasiRoutes = require("./routes/konsultasiRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
+const authRoutes = require("./routes/authRoutes");
 
-// Menggunakan modul rute dengan prefix API
-// Semua rute di pasienRoutes akan diakses melalui /api/pasien
-app.use("/api/pasien", pasienRoutes);
-// Semua rute di konsultasiRoutes akan diakses melalui /api/konsultasi
-app.use("/api/konsultasi", konsultasiRoutes);
-// Semua rute di analyticsRoutes akan diakses melalui /api/analytics
-app.use("/api/analytics", analyticsRoutes);
-
-// Rute dasar untuk Healthcheck Railway (PENTING untuk Railway Healthcheck Path: `/`)
-// Ini merespons dengan status 200 OK secara cepat
 app.get("/", (req, res) => {
-  res.status(200).send("Service is healthy"); // Respons sederhana untuk Healthcheck
+  res.status(200).send("Service is healthy");
 });
 
-// Rute dasar untuk menguji URL API Base (jika Healthcheck Path Railway diatur ke `/api`)
-// Ini juga memberikan respons yang jelas saat diakses di browser
+app.use("/api/auth/login", loginLimiter);
+app.use("/api/auth", authRoutes);
+app.use("/api/pasien", apiLimiter, pasienRoutes);
+app.use("/api/konsultasi", apiLimiter, konsultasiRoutes);
+app.use("/api/analytics", apiLimiter, analyticsRoutes);
+
 app.get("/api", (req, res) => {
   res.send("Patient Management API is running...");
 });
 
-// Middleware untuk menangani rute yang tidak ditemukan (404 Not Found)
-// Ini akan merespons jika tidak ada rute di atas yang cocok dengan permintaan
-app.use((req, res, next) => {
+// 404 handler
+app.use((req, res) => {
   res.status(404).json({ message: "API Endpoint Not Found" });
 });
 
-// Middleware penanganan kesalahan global
-// Ini akan menangkap error yang terjadi di rute atau middleware sebelumnya
-app.use((err, req, res, next) => {
-  console.error(err.stack); // Log stack trace error ke konsol server
-  res.status(500).send("Something broke on the server!"); // Kirim respons 500 ke klien
+// Error handler terpusat
+const errorHandler = require("./middlewares/error");
+app.use(errorHandler);
+
+const server = app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
 });
 
-// Memulai server Express
-// app.listen(PORT, '0.0.0.0', ...) membuat server mendengarkan di semua antarmuka jaringan
-// pada port yang ditentukan oleh Railway atau default ke 3000.
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on http://0.0.0.0:${PORT}`); // Log URL lokal server
-  console.log(`CORS allowed origin(s): ${CORS_ORIGIN || "*"}`); // Log origin CORS yang diizinkan
-});
+// Graceful shutdown
+const shutdown = (signal) => {
+  console.log(`${signal} diterima - mematikan server...`);
+  server.close(() => {
+    mongoose.connection
+      .close()
+      .then(() => {
+        console.log("Koneksi MongoDB ditutup. Proses selesai.");
+        process.exit(0);
+      })
+      .catch(() => process.exit(0));
+  });
+};
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));

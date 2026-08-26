@@ -5,22 +5,11 @@ import api from "../services/api";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { Link } from "react-router-dom";
-import { SearchIcon, CalendarIcon, UserIcon } from "@heroicons/react/outline";
+import { SearchIcon, CalendarIcon } from "@heroicons/react/outline";
 import Select from "react-select"; // Untuk dropdown filter
 import { toast } from "react-toastify";
 import { Dialog } from "@headlessui/react"; // Untuk modal konfirmasi hapus
-
-// Fungsi untuk menghitung umur dari tanggal lahir
-const calculateAge = (dob) => {
-  const birthDate = new Date(dob);
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const m = today.getMonth() - birthDate.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  return age;
-};
+import { calculateAge, formatDateSafe } from "../utils/helpers";
 
 const petugasOptions = [
   { value: "", label: "Semua Petugas" },
@@ -52,9 +41,18 @@ const Consultations = () => {
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [patientToDelete, setPatientToDelete] = useState(null);
-  const [petugasPenghapus, setPetugasPenghapus] = useState(""); // Siapa yang menghapus
 
   const ITEMS_PER_PAGE = 20; // Jumlah item per halaman
+  const SEARCH_DEBOUNCE_MS = 400;
+
+  // Debounce pencarian agar tidak request setiap keystroke
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const fetchPatients = async (page = 1) => {
     setLoading(true);
@@ -66,7 +64,7 @@ const Consultations = () => {
         sortBy,
         sortOrder,
       };
-      if (searchTerm) params.search = searchTerm;
+      if (debouncedSearchTerm) params.search = debouncedSearchTerm;
       if (filterDate) params.tanggalDaftar = filterDate; // Format YYYY-MM-DD
       if (filterGender) params.jenisKelamin = filterGender;
       if (filterPetugas) params.petugasPendaftaran = filterPetugas;
@@ -87,7 +85,7 @@ const Consultations = () => {
 
   useEffect(() => {
     fetchPatients();
-  }, [searchTerm, filterDate, filterGender, filterPetugas, sortBy, sortOrder]); // Refetch saat filter berubah
+  }, [debouncedSearchTerm, filterDate, filterGender, filterPetugas, sortBy, sortOrder]); // Refetch saat filter berubah
 
   const handleSort = (column) => {
     if (sortBy === column) {
@@ -122,26 +120,21 @@ const Consultations = () => {
   const closeDeleteModal = () => {
     setIsDeleteModalOpen(false);
     setPatientToDelete(null);
-    setPetugasPenghapus("");
   };
 
   const handleDeletePatient = async () => {
-    if (!patientToDelete || !petugasPenghapus) {
-      toast.error("Nama petugas penghapus wajib diisi.");
-      return;
-    }
+    if (!patientToDelete) return;
     setLoading(true);
     try {
-      await api.delete(`/pasien/${patientToDelete._id}`, {
-        data: { petugasPenghapus },
-      });
+      await api.delete(`/pasien/${patientToDelete._id}`);
       toast.success(`Pasien ${patientToDelete.nama} berhasil dihapus.`);
       closeDeleteModal();
       fetchPatients(currentPage); // Refresh list
     } catch (err) {
       console.error("Error deleting patient:", err);
       toast.error(
-        "Gagal menghapus pasien. Pastikan tidak ada data terkait atau coba lagi."
+        err.response?.data?.message ||
+          "Gagal menghapus pasien. Silakan coba lagi."
       );
     } finally {
       setLoading(false);
@@ -242,14 +235,6 @@ const Consultations = () => {
             isClearable
           />
         </div>
-
-        {/* <button
-          onClick={() => fetchPatients(1)} // Muat ulang dengan filter baru
-          className="ml-auto inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200"
-        >
-          <SearchIcon className="h-5 w-5 mr-2" />
-          Terapkan Filter
-        </button> */}
       </div>
 
       {patients && patients.length > 0 ? (
@@ -356,10 +341,8 @@ const Consultations = () => {
                     {patient.noHP}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                    {format(
-                      new Date(patient.tanggalDaftar),
-                      "dd MMMM yyyy, HH:mm",
-                      { locale: id }
+                    {formatDateSafe(patient.tanggalDaftar, (date) =>
+                      format(date, "dd MMMM yyyy, HH:mm", { locale: id })
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
@@ -399,7 +382,7 @@ const Consultations = () => {
               disabled={currentPage === 1}
               className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Previous
+              Sebelumnya
             </button>
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
               <button
@@ -419,7 +402,7 @@ const Consultations = () => {
               disabled={currentPage === totalPages}
               className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Next
+              Berikutnya
             </button>
           </nav>
         </div>
@@ -438,37 +421,12 @@ const Consultations = () => {
               Konfirmasi Penghapusan
             </Dialog.Title>
             <p className="text-gray-700 mb-4">
-              Anda yakin ingin menghapus pasien{" "}
-              <span className="font-semibold">{patientToDelete?.nama}</span> (
-              {patientToDelete?.noKartu})? Semua riwayat konsultasi pasien ini
-              juga akan terhapus. Aksi ini tidak dapat dibatalkan.
-            </p>
-            <div className="mb-4">
-              <label
-                htmlFor="petugasPenghapus"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Nama Petugas yang Menghapus:
-              </label>
-              <Select
-                id="petugasPenghapus"
-                name="petugasPenghapus"
-                options={petugasOptions.filter((opt) => opt.value !== "")} // Tanpa opsi "Semua Petugas"
-                onChange={(selected) =>
-                  setPetugasPenghapus(selected ? selected.value : "")
-                }
-                value={
-                  petugasOptions.find(
-                    (opt) => opt.value === petugasPenghapus
-                  ) || null
-                }
-                classNamePrefix="react-select"
-                placeholder="Pilih Petugas"
-                isClearable
-                required
-              />
-            </div>
-            <div className="flex justify-end gap-3">
+               Anda yakin ingin menghapus pasien{" "}
+               <span className="font-semibold">{patientToDelete?.nama}</span> (
+               {patientToDelete?.noKartu})? Semua riwayat konsultasi pasien ini
+               juga akan terhapus. Aksi ini tidak dapat dibatalkan.
+             </p>
+             <div className="flex justify-end gap-3">
               <button
                 onClick={closeDeleteModal}
                 className="inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
@@ -478,7 +436,7 @@ const Consultations = () => {
               <button
                 onClick={handleDeletePatient}
                 className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
-                disabled={loading || !petugasPenghapus}
+                disabled={loading}
               >
                 {loading ? "Menghapus..." : "Hapus Pasien"}
               </button>
