@@ -23,12 +23,6 @@ import {
   RefreshIcon,
   ExclamationCircleIcon,
   InboxIcon,
-  HeartIcon,
-  ArrowDownIcon,
-  ArrowsExpandIcon,
-  ScaleIcon,
-  ChartBarIcon,
-  ArrowUpIcon,
 } from "@heroicons/react/outline";
 import api from "../services/api";
 import { toast } from "react-toastify";
@@ -41,6 +35,7 @@ import ProgressRing from "../components/analytics/ProgressRing";
 import DistributionMap from "../components/analytics/DistributionMap";
 import PageHeader from "../components/ui/PageHeader";
 import Button from "../components/ui/Button";
+import Badge from "../components/ui/Badge";
 import {
   CHART_COLORS,
   AXIS_TICK,
@@ -148,19 +143,29 @@ const HorizontalBarList = ({
   );
 };
 
-const MiniStatTile = ({ icon, tileClass, iconClass, label, value }) => {
-  const Icon = icon;
-  return (
-    <div className={`flex items-center gap-3 rounded-lg p-4 ${tileClass}`}>
-      <Icon className={`h-6 w-6 shrink-0 ${iconClass}`} aria-hidden="true" />
-      <div className="min-w-0">
-        <p className="text-xs leading-snug text-gray-500">{label}</p>
-        <p className="mt-0.5 truncate text-xl font-bold text-gray-900">
-          {value}
-        </p>
-      </div>
-    </div>
-  );
+// IMT dari rata-rata tinggi & berat (approximasi, ditandai "±") + kategori WHO
+const bmiInfo = (vitalStats) => {
+  const tb = Number(vitalStats.avgTinggiBadan);
+  const bb = Number(vitalStats.avgBeratBadan);
+  if (!tb || !bb) return null;
+  const imt = bb / Math.pow(tb / 100, 2);
+  let kategori = "Normal";
+  let tone = "green";
+  if (imt < 18.5) {
+    kategori = "Kurus";
+    tone = "amber";
+  } else if (imt >= 30) {
+    kategori = "Obesitas";
+    tone = "red";
+  } else if (imt >= 25) {
+    kategori = "Berlebih";
+    tone = "amber";
+  }
+  return {
+    value: imt.toLocaleString("id-ID", { maximumFractionDigits: 1 }),
+    kategori,
+    tone,
+  };
 };
 
 const Analytics = () => {
@@ -259,8 +264,6 @@ const Analytics = () => {
           icon={CalendarIcon}
           label="Pertumbuhan Pasien (MoM)"
           value={<GrowthValue value={growth.mom ?? 0} />}
-          iconBg="bg-emerald-50"
-          iconColor="text-emerald-600"
           delay={0.05}
         >
           <ComparisonFooter
@@ -275,8 +278,6 @@ const Analytics = () => {
           icon={CalendarIcon}
           label="Pertumbuhan Pasien (YoY)"
           value={<GrowthValue value={growth.yoy ?? 0} />}
-          iconBg="bg-violet-50"
-          iconColor="text-violet-600"
           delay={0.1}
         >
           <ComparisonFooter
@@ -493,64 +494,64 @@ const Analytics = () => {
       </ChartCard>
 
       <ChartCard title="Rata-rata Vital Stats">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <MiniStatTile
-            icon={HeartIcon}
-            tileClass="bg-rose-50"
-            iconClass="text-rose-600"
-            label="Tensi Sistolik (mmHg)"
-            value={formatDecimal(vitalStats.avgSistolik)}
-          />
-          <MiniStatTile
-            icon={ArrowDownIcon}
-            tileClass="bg-amber-50"
-            iconClass="text-amber-600"
-            label="Tensi Diastolik (mmHg)"
-            value={formatDecimal(vitalStats.avgDiastolik)}
-          />
-          <MiniStatTile
-            icon={ArrowsExpandIcon}
-            tileClass="bg-sky-50"
-            iconClass="text-sky-600"
-            label="Tinggi Badan (cm)"
-            value={formatDecimal(vitalStats.avgTinggiBadan)}
-          />
-          <MiniStatTile
-            icon={ScaleIcon}
-            tileClass="bg-emerald-50"
-            iconClass="text-emerald-600"
-            label="Berat Badan (kg)"
-            value={formatDecimal(vitalStats.avgBeratBadan)}
-          />
+        <div className="grid grid-cols-1 divide-y divide-gray-100 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+          <div className="py-1 pr-6 sm:py-0">
+            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+              Tensi Rata-rata
+            </p>
+            <p className="mt-1.5 text-3xl font-bold tracking-tight text-gray-900 tabular-nums">
+              {formatDecimal(vitalStats.avgSistolik)}
+              <span className="mx-1 text-gray-300">/</span>
+              {formatDecimal(vitalStats.avgDiastolik)}
+              <span className="ml-1.5 text-base font-semibold text-gray-500">
+                mmHg
+              </span>
+            </p>
+          </div>
+          <div className="py-1 sm:px-6 sm:py-0">
+            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+              IMT (dari rata-rata TB &amp; BB)
+            </p>
+            {(() => {
+              const bmi = bmiInfo(vitalStats);
+              return (
+                <p className="mt-1.5 text-3xl font-bold tracking-tight text-gray-900 tabular-nums">
+                  {bmi ? `±${bmi.value}` : "N/A"}
+                  {bmi ? (
+                    <span className="ml-3 inline-block translate-y-[-4px]">
+                      <Badge tone={bmi.tone}>{bmi.kategori}</Badge>
+                    </span>
+                  ) : null}
+                </p>
+              );
+            })()}
+          </div>
         </div>
       </ChartCard>
 
       <ChartCard title="Retensi Pasien">
         <div className="flex flex-col items-center gap-8 py-2 lg:flex-row">
           <ProgressRing value={retention.retentionRate} label="pasien kembali" />
-          <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
-            <MiniStatTile
-              icon={UserGroupIcon}
-              tileClass="bg-violet-50"
-              iconClass="text-violet-600"
-              label="Total Pasien Unik"
-              value={formatNumber(retention.totalUniquePatients)}
-            />
-            <MiniStatTile
-              icon={ArrowUpIcon}
-              tileClass="bg-indigo-50"
-              iconClass="text-indigo-600"
-              label="Pasien Konsultasi Berulang"
-              value={formatNumber(retention.retainedPatients)}
-            />
-            <MiniStatTile
-              icon={ChartBarIcon}
-              tileClass="bg-pink-50"
-              iconClass="text-pink-600"
-              label="Rata-rata Konsultasi per Pasien"
-              value={formatDecimal(retention.avgConsultationsPerPatient)}
-            />
-          </div>
+          <dl className="w-full divide-y divide-gray-100">
+            <div className="flex items-baseline justify-between gap-4 py-3">
+              <dt className="text-sm text-gray-500">Total Pasien Unik</dt>
+              <dd className="text-xl font-bold tabular-nums text-gray-900">
+                {formatNumber(retention.totalUniquePatients)}
+              </dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-4 py-3">
+              <dt className="text-sm text-gray-500">Pasien Konsultasi Berulang</dt>
+              <dd className="text-xl font-bold tabular-nums text-gray-900">
+                {formatNumber(retention.retainedPatients)}
+              </dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-4 py-3">
+              <dt className="text-sm text-gray-500">Rata-rata Konsultasi per Pasien</dt>
+              <dd className="text-xl font-bold tabular-nums text-gray-900">
+                {formatDecimal(retention.avgConsultationsPerPatient)}
+              </dd>
+            </div>
+          </dl>
         </div>
       </ChartCard>
     </motion.div>
