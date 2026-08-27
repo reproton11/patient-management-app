@@ -4,7 +4,23 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom scrollbar for better UX */
+@layer base {
+  body {
+    font-family: "Figtree", system-ui, sans-serif;
+    @apply bg-canvas font-medium text-gray-800 antialiased;
+  }
+
+  ::selection {
+    @apply bg-primary-100 text-primary-900;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    @apply text-gray-400;
+  }
+}
+
+/* Custom scrollbar untuk UX yang lebih baik */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -24,10 +40,145 @@
   background: #888;
 }
 
-body {
-  font-family: "Google Sans", "sans-serif";
-  @apply bg-gray-50 text-gray-800;
-} 
+@layer components {
+  /* Latar aurora lembut — prasyarat efek kaca (glass butuh sesuatu untuk di-blur) */
+  .aurora-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -10;
+    pointer-events: none;
+    background:
+      radial-gradient(42rem 42rem at 12% -10%, rgb(165 243 252 / 0.55), transparent 60%),
+      radial-gradient(36rem 36rem at 105% 15%, rgb(167 243 208 / 0.5), transparent 60%),
+      radial-gradient(40rem 40rem at 50% 115%, rgb(186 230 253 / 0.45), transparent 60%),
+      linear-gradient(180deg, #f8fafb 0%, #f0f9ff 100%);
+  }
+
+  .card {
+    @apply rounded-xl border border-white/70 bg-white/70 shadow-card backdrop-blur-xl;
+  }
+
+  .card-hover {
+    @apply transition-shadow hover:shadow-card-hover;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary-600 text-white hover:bg-primary-700;
+  }
+
+  .btn-secondary {
+    @apply btn bg-white text-gray-700 border border-gray-300 hover:bg-gray-50;
+  }
+
+  .btn-danger {
+    @apply btn bg-red-600 text-white hover:bg-red-700;
+  }
+
+  .btn-success {
+    @apply btn bg-emerald-600 text-white hover:bg-emerald-700;
+  }
+
+  .btn-warning {
+    @apply btn bg-amber-500 text-white hover:bg-amber-600;
+  }
+
+  .btn-ghost {
+    @apply btn bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-900;
+  }
+
+  .input {
+    @apply block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-600/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500;
+  }
+
+  .input-error {
+    @apply border-red-500 focus:border-red-500 focus:ring-red-500/20;
+  }
+
+  .field-label {
+    @apply block text-sm font-semibold text-gray-700 mb-1.5;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+
+  .page-header {
+    @apply flex flex-wrap items-start justify-between gap-3;
+  }
+
+  .page-title {
+    @apply text-2xl font-bold tracking-tight text-gray-900;
+  }
+
+  .page-subtitle {
+    @apply mt-1 text-sm text-gray-500;
+  }
+}
+
+/* Fallback browser tanpa backdrop-filter: kaca menjadi permukaan solid agar teks tetap terbaca */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .card {
+    background-color: rgb(255 255 255 / 0.96);
+  }
+  body .Toastify__toast {
+    background-color: rgb(255 255 255 / 0.97);
+  }
+}
+
+/* ===== Toast (react-toastify) — kaca senada tema ===== */
+body .Toastify__toast,
+body .Toastify__toast-theme--light.Toastify__toast {
+  border-radius: 0.75rem;
+  border: 1px solid rgb(255 255 255 / 0.7);
+  background: rgb(255 255 255 / 0.85);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  box-shadow:
+    0 8px 24px -6px rgb(16 24 40 / 0.14),
+    0 0 0 1px rgb(16 24 40 / 0.04);
+  color: #0f172a;
+  font-family: inherit;
+  font-weight: 500;
+  font-size: 0.9375rem;
+  line-height: 1.5rem;
+  min-height: 0;
+  padding: 0.875rem 1rem;
+}
+
+body .Toastify__toast-body {
+  margin: 0;
+  padding: 0;
+}
+
+body .Toastify__close-button {
+  color: #64748b;
+  opacity: 1;
+  align-self: center;
+}
+
+body .Toastify__close-button:hover {
+  color: #0f172a;
+}
+
+body .Toastify__toast--success .Toastify__progress-bar {
+  background: #059669;
+}
+
+body .Toastify__toast--error .Toastify__progress-bar {
+  background: #dc2626;
+}
+
+body .Toastify__toast--info .Toastify__progress-bar {
+  background: #0891b2;
+}
+
+body .Toastify__toast--warning .Toastify__progress-bar {
+  background: #d97706;
+}
 
 /* Global Print Styles (ini tetap berlaku untuk browser print) */
 @media print {
@@ -36,6 +187,16 @@ body {
   }
   aside {
     display: none !important;
+  }
+  /* Netralkan efek kaca saat cetak agar hasil cetak solid & terbaca */
+  .aurora-bg {
+    display: none !important;
+  }
+  .card,
+  [class*="backdrop-blur"] {
+    background-color: #ffffff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
   main {
     margin-left: 0 !important;

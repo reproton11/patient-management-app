@@ -1,19 +1,21 @@
 export const CHART_COLORS = [
-  "#2563EB",
+  "#0891B2",
+  "#059669",
   "#0EA5E9",
-  "#10B981",
   "#F59E0B",
   "#8B5CF6",
   "#F43F5E",
   "#14B8A6",
+  "#64748B",
   "#F97316",
   "#6366F1",
-  "#EC4899",
 ];
 
-export const AXIS_TICK = { fill: "#6B7280", fontSize: 12 };
+export const PRIMARY_COLOR = "#0891B2";
 
-export const GRID_COLOR = "#F3F4F6";
+export const AXIS_TICK = { fill: "#64748B", fontSize: 13 };
+
+export const GRID_COLOR = "#F1F5F9";
 
 export const formatNumber = (value) => {
   if (value === null || value === undefined || Number.isNaN(Number(value))) {

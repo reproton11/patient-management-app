@@ -5,11 +5,19 @@ import api from "../services/api";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { Link } from "react-router-dom";
-import { SearchIcon, CalendarIcon } from "@heroicons/react/outline";
+import {
+  SearchIcon,
+  CalendarIcon,
+} from "@heroicons/react/outline";
 import Select from "react-select"; // Untuk dropdown filter
 import { toast } from "react-toastify";
-import { Dialog } from "@headlessui/react"; // Untuk modal konfirmasi hapus
 import { calculateAge, formatDateSafe } from "../utils/helpers";
+import Card from "../components/ui/Card";
+import PageHeader from "../components/ui/PageHeader";
+import Modal from "../components/ui/Modal";
+import Button from "../components/ui/Button";
+import Pagination from "../components/ui/Pagination";
+import DataTable from "../components/ui/DataTable";
 
 const petugasOptions = [
   { value: "", label: "Semua Petugas" },
@@ -24,6 +32,25 @@ const jenisKelaminOptions = [
   { value: "Laki-laki", label: "Laki-laki" },
   { value: "Perempuan", label: "Perempuan" },
 ];
+
+const selectStyles = {
+  control: (base) => ({
+    ...base,
+    minHeight: 42,
+    borderRadius: 8,
+    borderColor: "#d1d5db",
+    boxShadow: "none",
+    fontSize: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.75)",
+    "&:hover": { borderColor: "#9ca3af" },
+  }),
+  menu: (base) => ({ ...base, fontSize: 16 }),
+  option: (base, state) => ({
+    ...base,
+    backgroundColor: state.isFocused ? "#eff6ff" : "transparent",
+    color: state.isFocused ? "#1d4ed8" : "#374151",
+  }),
+};
 
 const Consultations = () => {
   const [patients, setPatients] = useState([]);
@@ -112,6 +139,13 @@ const Consultations = () => {
     setFilterPetugas(selectedOption ? selectedOption.value : "");
   };
 
+  const resetFilters = () => {
+    setSearchTerm("");
+    setFilterDate("");
+    setFilterGender("");
+    setFilterPetugas("");
+  };
+
   const openDeleteModal = (patient) => {
     setPatientToDelete(patient);
     setIsDeleteModalOpen(true);
@@ -142,87 +176,85 @@ const Consultations = () => {
   };
 
   if (loading && patients.length === 0)
-    return <div className="text-center py-8">Memuat daftar pasien...</div>;
+    return (
+      <div className="animate-pulse space-y-6">
+        <div className="h-7 w-48 rounded-lg bg-gray-200" />
+        <div className="flex flex-wrap gap-4">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-12 flex-1 min-w-[150px] rounded-lg bg-gray-200" />
+          ))}
+        </div>
+        <div className="h-80 rounded-xl bg-gray-200" />
+      </div>
+    );
   if (error)
-    return <div className="text-center py-8 text-red-500">{error}</div>;
+    return <div className="text-center py-8 text-red-600">{error}</div>;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-8"
+      transition={{ duration: 0.25 }}
+      className="space-y-6"
     >
-      <h1 className="text-4xl font-extrabold text-gray-900 mb-8 border-b pb-4">
-        Konsultasi Pasien
-      </h1>
+      <PageHeader
+        title="Konsultasi Pasien"
+        subtitle="Cari, filter, dan kelola data pasien yang terdaftar"
+      />
 
       {/* Filter dan Pencarian */}
-      <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 flex flex-wrap gap-4 items-end mb-8">
-        <div className="flex-1 min-w-[200px]">
-          <label
-            htmlFor="search"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
+      <Card className="flex flex-wrap items-end gap-4 p-5">
+        <div className="min-w-[200px] flex-1">
+          <label htmlFor="search" className="field-label">
             Cari Pasien
           </label>
           <div className="relative">
+            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" aria-hidden="true" />
             <input
               type="text"
               id="search"
               placeholder="Nama, No. Kartu, No. HP..."
               value={searchTerm}
               onChange={handleSearchChange}
-              className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="input pl-10"
             />
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
           </div>
         </div>
 
-        <div className="flex-1 min-w-[150px]">
-          <label
-            htmlFor="filterDate"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
+        <div className="min-w-[170px] flex-1">
+          <label htmlFor="filterDate" className="field-label">
             Tanggal Daftar
           </label>
           <div className="relative">
+            <CalendarIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" aria-hidden="true" />
             <input
               type="date"
               id="filterDate"
               value={filterDate}
               onChange={handleFilterDateChange}
-              className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="input pl-10"
             />
-            <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
           </div>
         </div>
 
-        <div className="flex-1 min-w-[150px]">
-          <label
-            htmlFor="filterGender"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
+        <div className="min-w-[170px] flex-1">
+          <label htmlFor="filterGender" className="field-label">
             Jenis Kelamin
           </label>
           <Select
             id="filterGender"
             options={jenisKelaminOptions}
             onChange={handleFilterGenderChange}
-            value={jenisKelaminOptions.find(
-              (opt) => opt.value === filterGender
-            )}
+            value={jenisKelaminOptions.find((opt) => opt.value === filterGender)}
             classNamePrefix="react-select"
             placeholder="Pilih Gender"
             isClearable
+            styles={selectStyles}
           />
         </div>
 
-        <div className="flex-1 min-w-[150px]">
-          <label
-            htmlFor="filterPetugas"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
+        <div className="min-w-[170px] flex-1">
+          <label htmlFor="filterPetugas" className="field-label">
             Petugas Daftar
           </label>
           <Select
@@ -233,217 +265,123 @@ const Consultations = () => {
             classNamePrefix="react-select"
             placeholder="Pilih Petugas"
             isClearable
+            styles={selectStyles}
           />
         </div>
-      </div>
+      </Card>
 
       {patients && patients.length > 0 ? (
-        <div className="overflow-x-auto bg-white rounded-xl shadow-lg border border-gray-200">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
-                  cursor-pointer"
-                  onClick={() => handleSort("noKartu")}
-                >
-                  No. Kartu
-                  {sortBy === "noKartu" && (
-                    <span className="ml-2">
-                      {sortOrder === "asc" ? " ▲" : " ▼"}
-                    </span>
-                  )}
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
-                  cursor-pointer"
-                  onClick={() => handleSort("nama")}
-                >
-                  Nama Pasien
-                  {sortBy === "nama" && (
-                    <span className="ml-2">
-                      {sortOrder === "asc" ? " ▲" : " ▼"}
-                    </span>
-                  )}
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
-                  cursor-pointer"
-                  onClick={() => handleSort("tanggalLahir")}
-                >
-                  Tgl. Lahir (Umur)
-                  {sortBy === "tanggalLahir" && (
-                    <span className="ml-2">
-                      {sortOrder === "asc" ? " ▲" : " ▼"}
-                    </span>
-                  )}
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  No. HP
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
-                  cursor-pointer"
-                  onClick={() => handleSort("tanggalDaftar")}
-                >
-                  Tgl. Daftar
-                  {sortBy === "tanggalDaftar" && (
-                    <span className="ml-2">
-                      {sortOrder === "asc" ? " ▲" : " ▼"}
-                    </span>
-                  )}
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Aksi
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {patients.map((patient) => (
-                <motion.tr
-                  key={patient._id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="hover:bg-gray-50"
-                >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {patient.noKartu}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                    {patient.nama}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                    {patient.tanggalLahir
-                      ? format(new Date(patient.tanggalLahir), "dd MMM yyyy", {
-                          locale: id,
-                        })
-                      : "-"}
-                    &nbsp;(
-                    <span className="font-bold">
-                      {patient.tanggalLahir
-                        ? calculateAge(patient.tanggalLahir)
-                        : "-"}
-                    </span>
-                    th)
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                    {patient.noHP}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                    {formatDateSafe(patient.tanggalDaftar, (date) =>
-                      format(date, "dd MMMM yyyy, HH:mm", { locale: id })
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                    <Link
-                      to={`/consultations/${patient._id}`}
-                      className="text-blue-600 hover:text-blue-900 mr-3 transition duration-200"
-                    >
-                      Lihat Konsultasi
-                    </Link>
-                    <button
-                      onClick={() => openDeleteModal(patient)}
-                      className="text-red-600 hover:text-red-900 transition duration-200"
-                    >
-                      Hapus
-                    </button>
-                  </td>
-                </motion.tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          columns={[
+            { key: "noKartu", label: "No. Kartu", sortable: true, className: "font-semibold text-gray-900" },
+            { key: "nama", label: "Nama Pasien", sortable: true },
+            {
+              key: "tanggalLahir",
+              label: "Tgl. Lahir (Umur)",
+              sortable: true,
+              render: (patient) => (
+                <>
+                  {patient.tanggalLahir
+                    ? format(new Date(patient.tanggalLahir), "dd MMM yyyy", {
+                        locale: id,
+                      })
+                    : "-"}
+                  &nbsp;(
+                  <span className="font-semibold">
+                    {patient.tanggalLahir ? calculateAge(patient.tanggalLahir) : "-"}
+                  </span>
+                  th)
+                </>
+              ),
+            },
+            { key: "noHP", label: "No. HP" },
+            {
+              key: "tanggalDaftar",
+              label: "Tgl. Daftar",
+              sortable: true,
+              render: (patient) =>
+                formatDateSafe(patient.tanggalDaftar, (date) =>
+                  format(date, "dd MMMM yyyy, HH:mm", { locale: id })
+                ),
+            },
+            {
+              key: "aksi",
+              label: "Aksi",
+              align: "center",
+              className: "font-medium",
+              render: (patient) => (
+                <>
+                  <Link
+                    to={`/consultations/${patient._id}`}
+                    className="mr-3 text-primary-600 transition-colors hover:text-primary-800"
+                  >
+                    Lihat Konsultasi
+                  </Link>
+                  <button
+                    onClick={() => openDeleteModal(patient)}
+                    className="text-red-600 transition-colors hover:text-red-800"
+                  >
+                    Hapus
+                  </button>
+                </>
+              ),
+            },
+          ]}
+          rows={patients}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSort={handleSort}
+          emptyMessage="Tidak ada pasien yang ditemukan."
+          emptyHint="Coba ubah kata kunci pencarian atau filter yang aktif."
+          onResetFilters={resetFilters}
+          footer={
+            <Pagination
+              page={currentPage}
+              totalPages={totalPages}
+              onPageChange={(p) => fetchPatients(p)}
+            />
+          }
+        />
       ) : (
-        <p className="text-center text-gray-600 p-6 bg-white rounded-xl shadow-lg border border-gray-200">
-          Tidak ada pasien yang ditemukan.
-        </p>
-      )}
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-6">
-          <nav
-            className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-            aria-label="Pagination"
-          >
-            <button
-              onClick={() => fetchPatients(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Sebelumnya
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => fetchPatients(page)}
-                className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                  page === currentPage
-                    ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                    : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-            <button
-              onClick={() => fetchPatients(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Berikutnya
-            </button>
-          </nav>
-        </div>
+        <DataTable
+          columns={[{ key: "placeholder", label: "Data" }]}
+          rows={[]}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSort={handleSort}
+          emptyMessage="Tidak ada pasien yang ditemukan."
+          emptyHint="Coba ubah kata kunci pencarian atau filter yang aktif."
+          onResetFilters={resetFilters}
+        />
       )}
 
       {/* Delete Confirmation Modal */}
-      <Dialog
+      <Modal
         open={isDeleteModalOpen}
         onClose={closeDeleteModal}
-        className="relative z-50"
+        title="Konfirmasi Penghapusan"
+        description="Aksi ini tidak dapat dibatalkan."
       >
-        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-        <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <Dialog.Title className="text-xl font-bold text-red-600 mb-4">
-              Konfirmasi Penghapusan
-            </Dialog.Title>
-            <p className="text-gray-700 mb-4">
-               Anda yakin ingin menghapus pasien{" "}
-               <span className="font-semibold">{patientToDelete?.nama}</span> (
-               {patientToDelete?.noKartu})? Semua riwayat konsultasi pasien ini
-               juga akan terhapus. Aksi ini tidak dapat dibatalkan.
-             </p>
-             <div className="flex justify-end gap-3">
-              <button
-                onClick={closeDeleteModal}
-                className="inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleDeletePatient}
-                className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
-                disabled={loading}
-              >
-                {loading ? "Menghapus..." : "Hapus Pasien"}
-              </button>
-            </div>
-          </Dialog.Panel>
+        <p className="text-sm text-gray-700">
+          Anda yakin ingin menghapus pasien{" "}
+          <span className="font-semibold text-gray-900">{patientToDelete?.nama}</span>{" "}
+          ({patientToDelete?.noKartu})? Semua riwayat konsultasi pasien ini juga
+          akan terhapus.
+        </p>
+        <div className="mt-6 flex justify-end gap-3">
+          <Button variant="secondary" onClick={closeDeleteModal}>
+            Batal
+          </Button>
+          <Button
+            variant="danger"
+            onClick={handleDeletePatient}
+            loading={loading}
+            loadingText="Menghapus..."
+          >
+            Hapus Pasien
+          </Button>
         </div>
-      </Dialog>
+      </Modal>
     </motion.div>
   );
 };

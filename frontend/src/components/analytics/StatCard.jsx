@@ -4,27 +4,29 @@ const StatCard = ({
   icon,
   label,
   value,
-  iconBg = "bg-blue-50",
-  iconColor = "text-blue-600",
+  iconBg = "bg-primary-50",
+  iconColor = "text-primary-600",
   delay = 0,
   children,
 }) => {
   const Icon = icon;
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay }}
-      whileHover={{ y: -4 }}
-      className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+      transition={{ duration: 0.25, delay }}
+      whileHover={{ y: -2 }}
+      className="card card-hover p-6"
     >
       <div className="flex items-start justify-between">
-        <div className={`p-3 rounded-lg ${iconBg}`}>
-          <Icon className={`h-6 w-6 ${iconColor}`} />
+        <div className={`rounded-lg p-3 ${iconBg}`}>
+          <Icon className={`h-6 w-6 ${iconColor}`} aria-hidden="true" />
         </div>
       </div>
       <h3 className="mt-4 text-sm font-medium text-gray-500">{label}</h3>
-      <div className="mt-1 text-4xl font-extrabold text-gray-900">{value}</div>
+      <div className="mt-1 text-3xl font-bold tracking-tight text-gray-900">
+        {value}
+      </div>
       {children && <div className="mt-4">{children}</div>}
     </motion.div>
   );

@@ -16,7 +16,27 @@ const Analytics = React.lazy(() => import("./pages/Analytics"));
 
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[50vh]">
-    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+    <div className="animate-pulse space-y-3 w-full max-w-md">
+      <div className="h-6 w-1/3 rounded-lg bg-gray-200" />
+      <div className="grid grid-cols-3 gap-4">
+        <div className="h-24 rounded-xl bg-gray-200" />
+        <div className="h-24 rounded-xl bg-gray-200" />
+        <div className="h-24 rounded-xl bg-gray-200" />
+      </div>
+      <div className="h-64 rounded-xl bg-gray-200" />
+    </div>
+  </div>
+);
+
+const NotFound = () => (
+  <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
+    <p className="text-5xl font-bold text-gray-300">404</p>
+    <h1 className="mt-2 text-xl font-semibold text-gray-900">
+      Halaman Tidak Ditemukan
+    </h1>
+    <p className="mt-1 text-sm text-gray-500">
+      Halaman yang Anda cari tidak tersedia atau telah dipindahkan.
+    </p>
   </div>
 );
 
@@ -26,6 +46,7 @@ function App() {
       <ToastContainer
         position="top-right"
         autoClose={5000}
+        theme="light"
         hideProgressBar={false}
         newestOnTop={false}
         closeOnClick
@@ -84,7 +105,7 @@ function App() {
               </Suspense>
             }
           />
-          <Route path="*" element={<div>404 - Halaman Tidak Ditemukan</div>} />
+          <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
     </Router>

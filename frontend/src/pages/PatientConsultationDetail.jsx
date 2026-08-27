@@ -7,12 +7,9 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { toast } from "react-toastify";
 import Select from "react-select";
-import { Dialog } from "@headlessui/react";
 import {
   DocumentTextIcon,
-  UploadIcon,
   PrinterIcon,
-  TrashIcon,
   PencilIcon,
 } from "@heroicons/react/outline";
 
@@ -21,6 +18,12 @@ import {
 import PatientMedicalRecordTemplate from "../components/PatientMedicalRecordTemplate";
 import useIndonesiaRegions from "../hooks/useIndonesiaRegions";
 import { calculateAge, toTitleCase } from "../utils/helpers";
+import Card from "../components/ui/Card";
+import PageHeader from "../components/ui/PageHeader";
+import Modal from "../components/ui/Modal";
+import Button from "../components/ui/Button";
+import Field, { Input, Textarea } from "../components/ui/Field";
+import Pagination from "../components/ui/Pagination";
 
 const AUTOSAVE_DELAY_MS = 3000;
 
@@ -30,6 +33,31 @@ const petugasOptions = [
   { value: "Emy", label: "Emy" },
   { value: "Aziz", label: "Aziz" },
 ];
+
+const jenisKelaminOptions = [
+  { value: "Laki-laki", label: "Laki-laki" },
+  { value: "Perempuan", label: "Perempuan" },
+  { value: "Other", label: "Lainnya" },
+];
+
+const selectStyles = (error = false) => ({
+  control: (base) => ({
+    ...base,
+    minHeight: 42,
+    borderRadius: 8,
+    borderColor: error ? "#ef4444" : "#d1d5db",
+    boxShadow: "none",
+    fontSize: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.75)",
+    "&:hover": { borderColor: error ? "#ef4444" : "#9ca3af" },
+  }),
+  menu: (base) => ({ ...base, fontSize: 16 }),
+  option: (base, state) => ({
+    ...base,
+    backgroundColor: state.isFocused ? "#eff6ff" : "transparent",
+    color: state.isFocused ? "#1d4ed8" : "#374151",
+  }),
+});
 
 const buildSoapSnapshot = (soapForm, therapy) =>
   JSON.stringify({ soapForm, therapy });
@@ -66,8 +94,6 @@ const PatientConsultationDetail = () => {
   // Auto-save SOAP state
   const [autoSaveStatus, setAutoSaveStatus] = useState("idle");
   const [lastSavedAt, setLastSavedAt] = useState(null);
-
-  // Upload file state (Update:Sudah dihapus dalam update fitur 25/9/2025)
 
   // Edit Patient State
   const [isEditPatientModalOpen, setIsEditPatientModalOpen] = useState(false);
@@ -437,8 +463,6 @@ const PatientConsultationDetail = () => {
     fetchVillages,
   ]);
 
-  // handleConsultationSelect, handleSoapChange, handleSaveConsultation, dll. tetap di tempatnya
-
   const handleConsultationSelect = (consultation) => {
     setActiveConsultationId(consultation._id);
     fillFormWithConsultationData(consultation);
@@ -529,8 +553,6 @@ const PatientConsultationDetail = () => {
       setLoading(false);
     }
   };
-
-  // --- File Upload Logic --- (Update:Sudah dihapus dalam update fitur 25/9/2025)
 
   // --- Edit Patient Logic ---
   const openEditPatientModal = () => {
@@ -647,9 +669,18 @@ const PatientConsultationDetail = () => {
   };
 
   if (loading && !patient)
-    return <div className="text-center py-8">Memuat data pasien...</div>;
+    return (
+      <div className="animate-pulse space-y-6">
+        <div className="h-7 w-64 rounded-lg bg-gray-200" />
+        <div className="h-40 rounded-xl bg-gray-200" />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="h-96 rounded-xl bg-gray-200" />
+          <div className="h-96 rounded-xl bg-gray-200 lg:col-span-2" />
+        </div>
+      </div>
+    );
   if (error)
-    return <div className="text-center py-8 text-red-500">{error}</div>;
+    return <div className="text-center py-8 text-red-600">{error}</div>;
   if (!patient)
     return <div className="text-center py-8">Pasien tidak ditemukan.</div>;
 
@@ -659,155 +690,131 @@ const PatientConsultationDetail = () => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-8"
+      transition={{ duration: 0.25 }}
+      className="space-y-6"
     >
-      <h1 className="text-4xl font-extrabold text-gray-900 mb-8 border-b pb-4">
-        Konsultasi Pasien: {patient.nama}
-      </h1>
+      <PageHeader
+        title={`Konsultasi Pasien: ${patient.nama}`}
+        subtitle={`No. Kartu ${patient.noKartu} • ${patient.jenisKelamin} • ${
+          patient.tanggalLahir ? `${calculateAge(patient.tanggalLahir)} tahun` : "-"
+        }`}
+        breadcrumb={[{ label: "Konsultasi Pasien", to: "/consultations" }, { label: patient.nama }]}
+      />
 
       {/* Patient Info Card */}
-      <motion.div
-        className="bg-white p-6 rounded-xl shadow-lg border border-gray-200"
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className="flex justify-between items-center mb-4 no-print">
-          <h2 className="text-2xl font-semibold text-gray-800">
-            Detail Pasien
-          </h2>
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={openEditPatientModal}
-              className="inline-flex justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition duration-200"
-            >
-              <PencilIcon className="h-5 w-5 mr-2" />
-              Edit Data Pasien
-            </button>
-            <button
-              onClick={handleGeneratePdf} // Panggil fungsi generate PDF yang baru
-              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200"
-              disabled={!patient || loading || totalKonsultasi === 0}
-            >
-              <PrinterIcon className="h-5 w-5 mr-2" />
-              Cetak Rekam Medis
-            </button>
-          </div>
+      <Card className="p-6 no-print">
+        <Card.Header
+          title="Detail Pasien"
+          action={
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={PencilIcon}
+                onClick={openEditPatientModal}
+              >
+                Edit Data Pasien
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                icon={PrinterIcon}
+                onClick={handleGeneratePdf}
+                disabled={!patient || loading || totalKonsultasi === 0}
+              >
+                Cetak Rekam Medis
+              </Button>
+            </div>
+          }
+        />
+        <div className="grid grid-cols-1 gap-x-6 gap-y-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
+          <InfoItem label="No. Kartu" valueClassName="font-bold text-lg text-primary-600">
+            {patient.noKartu}
+          </InfoItem>
+          <InfoItem label="Nama">{patient.nama}</InfoItem>
+          <InfoItem label="Jenis Kelamin">{patient.jenisKelamin}</InfoItem>
+          <InfoItem label="Tanggal Lahir">
+            {patient.tanggalLahir
+              ? format(new Date(patient.tanggalLahir), "dd MMMM yyyy", {
+                  locale: id,
+                })
+              : "-"}
+          </InfoItem>
+          <InfoItem label="Umur">
+            {patient.tanggalLahir ? `${calculateAge(patient.tanggalLahir)} tahun` : "-"}
+          </InfoItem>
+          <InfoItem label="No. HP">{patient.noHP}</InfoItem>
+          <InfoItem label="Alamat">
+            {patient.alamat
+              ? `${patient.alamat.kelurahan || "-"}, ${
+                  patient.alamat.kecamatan || "-"
+                }, ${patient.alamat.kabupaten || "-"}, ${
+                  patient.alamat.provinsi || "-"
+                }`
+              : "-"}
+          </InfoItem>
+          <InfoItem label="Tgl. Daftar">
+            {patient.tanggalDaftar
+              ? format(new Date(patient.tanggalDaftar), "dd MMMM yyyy, HH:mm", {
+                  locale: id,
+                })
+              : "-"}
+          </InfoItem>
+          <InfoItem label="Terakhir di Update">
+            {patient.terakhirDiUpdate
+              ? format(
+                  new Date(patient.terakhirDiUpdate),
+                  "dd MMMM yyyy, HH:mm",
+                  { locale: id }
+                )
+              : "-"}
+          </InfoItem>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-gray-700">
-          <div>
-            <p className="font-medium">No. Kartu:</p>
-            <p className="font-bold text-lg text-blue-600">{patient.noKartu}</p>
-          </div>
-          <div>
-            <p className="font-medium">Nama:</p>
-            <p>{patient.nama}</p>
-          </div>
-          <div>
-            <p className="font-medium">Jenis Kelamin:</p>
-            <p>{patient.jenisKelamin}</p>
-          </div>
-          <div>
-            <p className="font-medium">Tanggal Lahir:</p>
-            <p>
-              {patient.tanggalLahir
-                ? format(new Date(patient.tanggalLahir), "dd MMMM yyyy", {
-                    locale: id,
-                  })
-                : "-"}
-            </p>
-          </div>
-          <div>
-            <p className="font-medium">Umur:</p>
-            <p>
-              {patient.tanggalLahir ? calculateAge(patient.tanggalLahir) : "-"}{" "}
-              tahun
-            </p>
-          </div>
-          <div>
-            <p className="font-medium">No. HP:</p>
-            <p>{patient.noHP}</p>
-          </div>
-          <div>
-            <p className="font-medium">Alamat:</p>
-            <p>
-              {patient.alamat
-                ? `${patient.alamat.kelurahan || "-"}, ${
-                    patient.alamat.kecamatan || "-"
-                  }, ${patient.alamat.kabupaten || "-"}, ${
-                    patient.alamat.provinsi || "-"
-                  }`
-                : "-"}
-            </p>
-          </div>
-          <div>
-            <p className="font-medium">Tgl. Daftar:</p>
-            <p>
-              {patient.tanggalDaftar
-                ? format(new Date(patient.tanggalDaftar), "dd MMMM yyyy, HH:mm", {
-                    locale: id,
-                  })
-                : "-"}
-            </p>
-          </div>
-          <div>
-            <p className="font-medium">Terakhir di Update:</p>
-            <p>
-              {patient.terakhirDiUpdate
-                ? format(
-                    new Date(patient.terakhirDiUpdate),
-                    "dd MMMM yyyy, HH:mm",
-                    { locale: id }
-                  )
-                : "-"}
-            </p>
-          </div>
-        </div>
-      </motion.div>
+      </Card>
 
       {/* Consultations History */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <motion.div
-          className="lg:col-span-1 bg-white p-6 rounded-xl shadow-lg border border-gray-200 no-print h-fit"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b pb-3">
-            Riwayat Konsultasi
-          </h2>
-          <button
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Card className="h-fit p-6 no-print lg:sticky lg:top-8 lg:self-start">
+          <Card.Header
+            title="Riwayat Konsultasi"
+            action={
+              <span className="text-xs font-medium text-gray-500">
+                {totalKonsultasi} total
+              </span>
+            }
+          />
+          <Button
+            variant="success"
+            className="mb-4 w-full"
+            icon={DocumentTextIcon}
             onClick={() => resetFormForNewConsultation(patient)}
-            className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-200 mb-4"
           >
-            <DocumentTextIcon className="h-5 w-5 mr-2" />
             Mulai Konsultasi Baru
-          </button>
+          </Button>
           {displayedConsultations.length > 0 ? (
-            <ul className="space-y-3 max-h-96 overflow-y-auto pr-2">
+            <ul className="max-h-96 space-y-2 overflow-y-auto pr-1">
               {displayedConsultations.map((consultation) => (
                 <li key={consultation._id}>
                   <button
+                    type="button"
                     onClick={() => handleConsultationSelect(consultation)}
-                    className={`w-full text-left p-3 rounded-lg border transition duration-200
-                      ${
-                        activeConsultationId === consultation._id
-                          ? "bg-blue-100 border-blue-500 text-blue-800 shadow-md"
-                          : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100 hover:border-blue-300"
-                      }`}
+                    className={`w-full rounded-lg border p-3 text-left transition-colors duration-150 ${
+                      activeConsultationId === consultation._id
+                        ? "border-primary-600 bg-primary-50 text-primary-900 shadow-sm"
+                        : "border-gray-200 bg-gray-50 text-gray-700 hover:border-primary-300 hover:bg-gray-100"
+                    }`}
                   >
-                    <p className="font-medium">
-                      Konsultasi pada:{" "}
+                    <p className="text-sm font-semibold">
+                      Konsultasi pada{" "}
                       {format(
                         new Date(consultation.tanggalKonsultasi),
                         "dd MMMM yyyy, HH:mm",
                         { locale: id }
                       )}
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="mt-0.5 text-xs text-gray-500">
                       Oleh: {consultation.petugasKonsultasi}
                     </p>
                   </button>
@@ -815,61 +822,23 @@ const PatientConsultationDetail = () => {
               ))}
             </ul>
           ) : (
-            <p className="text-gray-600">Belum ada riwayat konsultasi.</p>
+            <p className="py-4 text-center text-sm text-gray-500">
+              Belum ada riwayat konsultasi.
+            </p>
           )}
-          {totalPages > 1 && (
-            <div className="flex justify-center mt-4">
-              <nav
-                className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-                aria-label="Pagination"
-              >
-                <button
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(1, prev - 1))
-                  }
-                  disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Sebelumnya
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                        page === currentPage
-                          ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                          : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  )
-                )}
-                <button
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-                  }
-                  disabled={currentPage === totalPages}
-                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Berikutnya
-                </button>
-              </nav>
-            </div>
-          )}
-        </motion.div>
+          <div className="mt-4">
+            <Pagination
+              page={currentPage}
+              totalPages={totalPages}
+              onPageChange={(p) => setCurrentPage(p)}
+            />
+          </div>
+        </Card>
 
-        {/* SOAP Form & File Upload */}
-        <motion.div
-          className="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg border border-gray-200 no-print"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4 pb-3 border-b">
-            <h2 className="text-2xl font-semibold text-gray-800">
+        {/* SOAP Form */}
+        <Card className="h-fit p-6 no-print lg:col-span-2">
+          <div className="mb-4 flex flex-col gap-2 border-b border-gray-100 pb-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-base font-semibold text-gray-900">
               {isNewConsultation
                 ? "Konsultasi Baru"
                 : `Detail Konsultasi #${activeConsultation?._id?.slice(-5)}`}
@@ -878,7 +847,7 @@ const PatientConsultationDetail = () => {
           </div>
 
           {isNewConsultation && (
-            <p className="mb-4 text-sm text-blue-700 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+            <p className="mb-4 rounded-lg border border-primary-100 bg-primary-50 px-3 py-2 text-sm text-primary-800">
               Konsultasi baru perlu disimpan manual sekali dengan tombol Simpan.
               Setelah tersimpan, perubahan akan ter-auto-save otomatis 3 detik
               setelah berhenti mengetik.
@@ -887,245 +856,151 @@ const PatientConsultationDetail = () => {
 
           <div className="space-y-4">
             {/* Subjective */}
-            <div>
-              <label
-                htmlFor="S"
-                className="block text-sm font-medium text-gray-700"
-              >
-                S (Subjective - Keluhan Pasien)
-              </label>
-              <textarea
+            <Field label="S (Subjective - Keluhan Pasien)" htmlFor="S" error={formErrors.S}>
+              <Textarea
                 id="S"
                 name="S"
                 value={soapForm.S}
                 onChange={handleSoapChange}
                 rows="3"
-                className={`mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                  formErrors.S ? "border-red-500" : "border-gray-300"
-                }`}
-              ></textarea>
-              {formErrors.S && (
-                <p className="mt-1 text-sm text-red-500">{formErrors.S}</p>
-              )}
-            </div>
+                error={Boolean(formErrors.S)}
+              />
+            </Field>
 
             {/* Objective */}
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                O (Objective)
-              </label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-1">
-                <div>
-                  <label
-                    htmlFor="tensiSistolikO"
-                    className="block text-xs font-medium text-gray-600"
-                  >
-                    Tensi (Sistolik)
-                  </label>
-                  <input
+              <p className="field-label">O (Objective)</p>
+              <div className="mt-1 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field
+                  label="Tensi (Sistolik)"
+                  htmlFor="tensiSistolikO"
+                  error={formErrors["O.tensi.sistolik"]}
+                >
+                  <Input
                     type="number"
                     id="tensiSistolikO"
                     name="O.tensi.sistolik"
                     value={soapForm.O.tensi.sistolik}
                     onChange={handleSoapChange}
-                    className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm ${
-                      formErrors["O.tensi.sistolik"]
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    error={Boolean(formErrors["O.tensi.sistolik"])}
                     placeholder="mmHg"
                   />
-                  {formErrors["O.tensi.sistolik"] && (
-                    <p className="mt-1 text-xs text-red-500">
-                      {formErrors["O.tensi.sistolik"]}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label
-                    htmlFor="tensiDiastolikO"
-                    className="block text-xs font-medium text-gray-600"
-                  >
-                    Tensi (Diastolik)
-                  </label>
-                  <input
+                </Field>
+                <Field
+                  label="Tensi (Diastolik)"
+                  htmlFor="tensiDiastolikO"
+                  error={formErrors["O.tensi.diastolik"]}
+                >
+                  <Input
                     type="number"
                     id="tensiDiastolikO"
                     name="O.tensi.diastolik"
                     value={soapForm.O.tensi.diastolik}
                     onChange={handleSoapChange}
-                    className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm ${
-                      formErrors["O.tensi.diastolik"]
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    error={Boolean(formErrors["O.tensi.diastolik"])}
                     placeholder="mmHg"
                   />
-                  {formErrors["O.tensi.diastolik"] && (
-                    <p className="mt-1 text-xs text-red-500">
-                      {formErrors["O.tensi.diastolik"]}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label
-                    htmlFor="tinggiBadanO"
-                    className="block text-xs font-medium text-gray-600"
-                  >
-                    Tinggi Badan (cm)
-                  </label>
-                  <input
+                </Field>
+                <Field
+                  label="Tinggi Badan (cm)"
+                  htmlFor="tinggiBadanO"
+                  error={formErrors["O.tinggiBadan"]}
+                >
+                  <Input
                     type="number"
                     id="tinggiBadanO"
                     name="O.tinggiBadan"
                     value={soapForm.O.tinggiBadan}
                     onChange={handleSoapChange}
-                    className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm ${
-                      formErrors["O.tinggiBadan"]
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    error={Boolean(formErrors["O.tinggiBadan"])}
                     placeholder="cm"
                   />
-                  {formErrors["O.tinggiBadan"] && (
-                    <p className="mt-1 text-xs text-red-500">
-                      {formErrors["O.tinggiBadan"]}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label
-                    htmlFor="beratBadanO"
-                    className="block text-xs font-medium text-gray-600"
-                  >
-                    Berat Badan (kg)
-                  </label>
-                  <input
+                </Field>
+                <Field
+                  label="Berat Badan (kg)"
+                  htmlFor="beratBadanO"
+                  error={formErrors["O.beratBadan"]}
+                >
+                  <Input
                     type="number"
                     id="beratBadanO"
                     name="O.beratBadan"
                     value={soapForm.O.beratBadan}
                     onChange={handleSoapChange}
-                    className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm ${
-                      formErrors["O.beratBadan"]
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    error={Boolean(formErrors["O.beratBadan"])}
                     placeholder="kg"
                   />
-                  {formErrors["O.beratBadan"] && (
-                    <p className="mt-1 text-xs text-red-500">
-                      {formErrors["O.beratBadan"]}
-                    </p>
-                  )}
-                </div>
+                </Field>
               </div>
-              <div className="mt-2">
-                <label
+              <div className="mt-3">
+                <Field
+                  label="Tambahan (Observasi Manual)"
                   htmlFor="tambahanO"
-                  className="block text-xs font-medium text-gray-600"
+                  error={formErrors["O.tambahan"]}
                 >
-                  Tambahan (Observasi Manual)
-                </label>
-                <textarea
-                  id="tambahanO"
-                  name="O.tambahan"
-                  value={soapForm.O.tambahan}
-                  onChange={handleSoapChange}
-                  rows="2"
-                  className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm ${
-                    formErrors["O.tambahan"]
-                      ? "border-red-500"
-                      : "border-gray-300"
-                  }`}
-                ></textarea>
-                {formErrors["O.tambahan"] && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {formErrors["O.tambahan"]}
-                  </p>
-                )}
+                  <Textarea
+                    id="tambahanO"
+                    name="O.tambahan"
+                    value={soapForm.O.tambahan}
+                    onChange={handleSoapChange}
+                    rows="2"
+                    error={Boolean(formErrors["O.tambahan"])}
+                  />
+                </Field>
               </div>
             </div>
 
             {/* Assessment */}
-            <div>
-              <label
-                htmlFor="A"
-                className="block text-sm font-medium text-gray-700"
-              >
-                A (Assessment - Diagnosis Dokter)
-              </label>
-              <textarea
+            <Field label="A (Assessment - Diagnosis Dokter)" htmlFor="A" error={formErrors.A}>
+              <Textarea
                 id="A"
                 name="A"
                 value={soapForm.A}
                 onChange={handleSoapChange}
                 rows="3"
-                className={`mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                  formErrors.A ? "border-red-500" : "border-gray-300"
-                }`}
-              ></textarea>
-              {formErrors.A && (
-                <p className="mt-1 text-sm text-red-500">{formErrors.A}</p>
-              )}
-            </div>
+                error={Boolean(formErrors.A)}
+              />
+            </Field>
 
             {/* Plan */}
-            <div>
-              <label
-                htmlFor="P"
-                className="block text-sm font-medium text-gray-700"
-              >
-                P (Plan - Rencana Tindakan)
-              </label>
-              <textarea
+            <Field label="P (Plan - Rencana Tindakan)" htmlFor="P" error={formErrors.P}>
+              <Textarea
                 id="P"
                 name="P"
                 value={soapForm.P}
                 onChange={handleSoapChange}
                 rows="3"
-                className={`mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                  formErrors.P ? "border-red-500" : "border-gray-300"
-                }`}
-              ></textarea>
-              {formErrors.P && (
-                <p className="mt-1 text-sm text-red-500">{formErrors.P}</p>
-              )}
-            </div>
+                error={Boolean(formErrors.P)}
+              />
+            </Field>
 
             {/* Therapy */}
-            <div>
-              <label
-                htmlFor="therapy"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Therapy (Resep Obat, Tindakan Medis)
-              </label>
-              <textarea
+            <Field
+              label="Therapy (Resep Obat, Tindakan Medis)"
+              htmlFor="therapy"
+              error={formErrors.therapy}
+            >
+              <Textarea
                 id="therapy"
                 name="therapy"
                 value={therapy}
                 onChange={(e) => setTherapy(e.target.value)}
                 rows="3"
-                className={`mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                  formErrors.therapy ? "border-red-500" : "border-gray-300"
-                }`}
-              ></textarea>
-              {formErrors.therapy && (
-                <p className="mt-1 text-sm text-red-500">
-                  {formErrors.therapy}
-                </p>
-              )}
-            </div>
+                error={Boolean(formErrors.therapy)}
+              />
+            </Field>
 
             {/* Petugas Konsultasi (dipilih manual, terkunci setelah tersimpan) */}
-            <div>
-              <label
-                htmlFor="petugasKonsultasi"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Petugas Konsultasi
-              </label>
+            <Field
+              label="Petugas Konsultasi"
+              htmlFor="petugasKonsultasi"
+              error={formErrors.petugasKonsultasi}
+              hint={
+                !isNewConsultation
+                  ? "Perubahan petugas hanya berlaku melalui tombol Simpan."
+                  : undefined
+              }
+            >
               <Select
                 id="petugasKonsultasi"
                 name="petugasKonsultasi"
@@ -1138,516 +1013,333 @@ const PatientConsultationDetail = () => {
                     (opt) => opt.value === petugasKonsultasi
                   ) || null
                 }
-                className={`mt-1 block w-full ${
-                  formErrors.petugasKonsultasi ? "border-red-500" : ""
-                }`}
+                styles={selectStyles(Boolean(formErrors.petugasKonsultasi))}
                 classNamePrefix="react-select"
                 placeholder="Pilih Petugas Konsultasi"
                 isClearable
                 required={isNewConsultation}
               />
-              {formErrors.petugasKonsultasi && (
-                <p className="mt-1 text-sm text-red-500">
-                  {formErrors.petugasKonsultasi}
-                </p>
-              )}
-              {!isNewConsultation && (
-                <p className="mt-1 text-xs text-gray-400">
-                  Perubahan petugas hanya berlaku melalui tombol Simpan.
-                </p>
-              )}
-            </div>
-
-            {/* File Upload Section (Update:Sudah dihapus dalam update fitur 25/9/2025) */}
+            </Field>
 
             {/* Tombol Save */}
-            <div className="flex justify-end mt-6">
-              <button
-                type="button"
+            <div className="mt-6 flex justify-end">
+              <Button
                 onClick={handleSaveConsultation}
-                className="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200"
-                disabled={loading}
+                loading={loading}
+                loadingText="Menyimpan..."
+                className="px-6 py-2.5"
               >
-                {loading
-                  ? "Menyimpan..."
-                  : isNewConsultation
-                  ? "Simpan Konsultasi Baru"
-                  : "Update Konsultasi"}
-              </button>
+                {isNewConsultation ? "Simpan Konsultasi Baru" : "Update Konsultasi"}
+              </Button>
             </div>
           </div>
-        </motion.div>
+        </Card>
       </div>
 
-      {/* Upload File Modal (Update:Sudah dihapus dalam update fitur 25/9/2025) */}
-
-      {/* Preview File Modal (Update:Sudah dihapus dalam update fitur 25/9/2025) */}
-
       {/* Edit Patient Modal */}
-      <Dialog
+      <Modal
         open={isEditPatientModalOpen}
         onClose={closeEditPatientModal}
-        className="relative z-50"
+        title="Edit Data Pasien"
+        maxWidth="lg"
       >
-        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-        <div className="fixed inset-0 flex items-center justify-center p-4 overflow-y-auto">
-          <Dialog.Panel className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl my-8 font-sans">
-            <Dialog.Title className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">
-              Edit Data Pasien
-            </Dialog.Title>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleUpdatePatient();
-              }}
-              className="space-y-4"
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleUpdatePatient();
+          }}
+          className="space-y-4"
+        >
+          {/* Nama Pasien */}
+          <Field
+            label="Nama Lengkap"
+            htmlFor="editNama"
+            error={editPatientErrors.nama}
+          >
+            <Input
+              type="text"
+              id="editNama"
+              name="nama"
+              value={editPatientForm.nama || ""}
+              onChange={handleEditPatientChange}
+              error={Boolean(editPatientErrors.nama)}
+              required
+              pattern="[a-zA-Z\s]+"
+              title="Nama hanya boleh mengandung huruf dan spasi"
+            />
+          </Field>
+
+          {/* Alamat Lengkap */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field
+              label="Provinsi"
+              htmlFor="editProvinsi"
+              error={editPatientErrors["alamat.provinsi"]}
             >
-              {/* Nama Pasien */}
-              <div>
-                <label
-                  htmlFor="editNama"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Nama Lengkap
-                </label>
-                <input
-                  type="text"
-                  id="editNama"
-                  name="nama"
-                  value={editPatientForm.nama || ""}
-                  onChange={handleEditPatientChange}
-                  className={`mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                    editPatientErrors.nama
-                      ? "border-red-500"
-                      : "border-gray-300"
-                  }`}
-                  required
-                  pattern="[a-zA-Z\s]+"
-                  title="Nama hanya boleh mengandung huruf dan spasi"
-                />
-                {editPatientErrors.nama && (
-                  <p className="mt-1 text-sm text-red-500">
-                    {editPatientErrors.nama}
-                  </p>
-                )}
-              </div>
+              <Select
+                id="editProvinsi"
+                name="alamat.provinsi"
+                options={provinces}
+                onChange={handleEditPatientSelectChange}
+                value={
+                  provinces.find(
+                    (opt) => opt.label === editPatientForm.alamat?.provinsi
+                  ) || null
+                }
+                styles={selectStyles(Boolean(editPatientErrors["alamat.provinsi"]))}
+                classNamePrefix="react-select"
+                placeholder="Pilih Provinsi"
+                isClearable
+                isDisabled={regionsLoading}
+                required
+              />
+            </Field>
+            <Field
+              label="Kabupaten/Kota"
+              htmlFor="editKabupaten"
+              error={editPatientErrors["alamat.kabupaten"]}
+            >
+              <Select
+                id="editKabupaten"
+                name="alamat.kabupaten"
+                options={regencies}
+                onChange={handleEditPatientSelectChange}
+                value={
+                  regencies.find(
+                    (opt) => opt.label === editPatientForm.alamat?.kabupaten
+                  ) || null
+                }
+                styles={selectStyles(Boolean(editPatientErrors["alamat.kabupaten"]))}
+                classNamePrefix="react-select"
+                placeholder="Pilih Kabupaten/Kota"
+                isClearable
+                isDisabled={
+                  !editPatientForm.alamat?.provinsi || regionsLoading
+                }
+                required
+              />
+            </Field>
+            <Field
+              label="Kecamatan"
+              htmlFor="editKecamatan"
+              error={editPatientErrors["alamat.kecamatan"]}
+            >
+              <Select
+                id="editKecamatan"
+                name="alamat.kecamatan"
+                options={districts}
+                onChange={handleEditPatientSelectChange}
+                value={
+                  districts.find(
+                    (opt) => opt.label === editPatientForm.alamat?.kecamatan
+                  ) || null
+                }
+                styles={selectStyles(Boolean(editPatientErrors["alamat.kecamatan"]))}
+                classNamePrefix="react-select"
+                placeholder="Pilih Kecamatan"
+                isClearable
+                isDisabled={
+                  !editPatientForm.alamat?.kabupaten || regionsLoading
+                }
+                required
+              />
+            </Field>
+            <Field
+              label="Kelurahan/Desa"
+              htmlFor="editKelurahan"
+              error={editPatientErrors["alamat.kelurahan"]}
+            >
+              <Select
+                id="editKelurahan"
+                name="alamat.kelurahan"
+                options={villages}
+                onChange={handleEditPatientSelectChange}
+                value={
+                  villages.find(
+                    (opt) => opt.label === editPatientForm.alamat?.kelurahan
+                  ) || null
+                }
+                styles={selectStyles(Boolean(editPatientErrors["alamat.kelurahan"]))}
+                classNamePrefix="react-select"
+                placeholder="Pilih Kelurahan/Desa"
+                isClearable
+                isDisabled={
+                  !editPatientForm.alamat?.kecamatan || regionsLoading
+                }
+                required
+              />
+            </Field>
+          </div>
 
-              {/* Alamat Lengkap */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="editProvinsi"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Provinsi
-                  </label>
-                  <Select
-                    id="editProvinsi"
-                    name="alamat.provinsi"
-                    options={provinces}
-                    onChange={handleEditPatientSelectChange}
-                    value={
-                      provinces.find(
-                        (opt) => opt.label === editPatientForm.alamat?.provinsi
-                      ) || null
-                    }
-                    className={`mt-1 block w-full ${
-                      editPatientErrors["alamat.provinsi"]
-                        ? "border-red-500"
-                        : ""
-                    }`}
-                    classNamePrefix="react-select"
-                    placeholder="Pilih Provinsi"
-                    isClearable
-                    isDisabled={regionsLoading}
-                    required
-                  />
-                  {editPatientErrors["alamat.provinsi"] && (
-                    <p className="mt-1 text-sm text-red-500">
-                      {editPatientErrors["alamat.provinsi"]}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label
-                    htmlFor="editKabupaten"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Kabupaten/Kota
-                  </label>
-                  <Select
-                    id="editKabupaten"
-                    name="alamat.kabupaten"
-                    options={regencies}
-                    onChange={handleEditPatientSelectChange}
-                    value={
-                      regencies.find(
-                        (opt) => opt.label === editPatientForm.alamat?.kabupaten
-                      ) || null
-                    }
-                    className={`mt-1 block w-full ${
-                      editPatientErrors["alamat.kabupaten"]
-                        ? "border-red-500"
-                        : ""
-                    }`}
-                    classNamePrefix="react-select"
-                    placeholder="Pilih Kabupaten/Kota"
-                    isClearable
-                    isDisabled={
-                      !editPatientForm.alamat?.provinsi || regionsLoading
-                    }
-                    required
-                  />
-                  {editPatientErrors["alamat.kabupaten"] && (
-                    <p className="mt-1 text-sm text-red-500">
-                      {editPatientErrors["alamat.kabupaten"]}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label
-                    htmlFor="editKecamatan"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Kecamatan
-                  </label>
-                  <Select
-                    id="editKecamatan"
-                    name="alamat.kecamatan"
-                    options={districts}
-                    onChange={handleEditPatientSelectChange}
-                    value={
-                      districts.find(
-                        (opt) => opt.label === editPatientForm.alamat?.kecamatan
-                      ) || null
-                    }
-                    className={`mt-1 block w-full ${
-                      editPatientErrors["alamat.kecamatan"]
-                        ? "border-red-500"
-                        : ""
-                    }`}
-                    classNamePrefix="react-select"
-                    placeholder="Pilih Kecamatan"
-                    isClearable
-                    isDisabled={
-                      !editPatientForm.alamat?.kabupaten || regionsLoading
-                    }
-                    required
-                  />
-                  {editPatientErrors["alamat.kecamatan"] && (
-                    <p className="mt-1 text-sm text-red-500">
-                      {editPatientErrors["alamat.kecamatan"]}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label
-                    htmlFor="editKelurahan"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Kelurahan/Desa
-                  </label>
-                  <Select
-                    id="editKelurahan"
-                    name="alamat.kelurahan"
-                    options={villages}
-                    onChange={handleEditPatientSelectChange}
-                    value={
-                      villages.find(
-                        (opt) => opt.label === editPatientForm.alamat?.kelurahan
-                      ) || null
-                    }
-                    className={`mt-1 block w-full ${
-                      editPatientErrors["alamat.kelurahan"]
-                        ? "border-red-500"
-                        : ""
-                    }`}
-                    classNamePrefix="react-select"
-                    placeholder="Pilih Kelurahan/Desa"
-                    isClearable
-                    isDisabled={
-                      !editPatientForm.alamat?.kecamatan || regionsLoading
-                    }
-                    required
-                  />
-                  {editPatientErrors["alamat.kelurahan"] && (
-                    <p className="mt-1 text-sm text-red-500">
-                      {editPatientErrors["alamat.kelurahan"]}
-                    </p>
-                  )}
-                </div>
-              </div>
+          {/* Jenis Kelamin & Tanggal Lahir */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field
+              label="Jenis Kelamin"
+              htmlFor="editJenisKelamin"
+              error={editPatientErrors.jenisKelamin}
+            >
+              <Select
+                id="editJenisKelamin"
+                name="jenisKelamin"
+                options={jenisKelaminOptions}
+                onChange={handleEditPatientSelectChange}
+                value={
+                  jenisKelaminOptions.find(
+                    (opt) => opt.value === editPatientForm.jenisKelamin
+                  ) || null
+                }
+                styles={selectStyles(Boolean(editPatientErrors.jenisKelamin))}
+                classNamePrefix="react-select"
+                placeholder="Pilih Jenis Kelamin"
+                isClearable
+                required
+              />
+            </Field>
+            <Field
+              label="Tanggal Lahir"
+              htmlFor="editTanggalLahir"
+              error={editPatientErrors.tanggalLahir}
+            >
+              <Input
+                type="date"
+                id="editTanggalLahir"
+                name="tanggalLahir"
+                value={editPatientForm.tanggalLahir || ""}
+                onChange={handleEditPatientChange}
+                error={Boolean(editPatientErrors.tanggalLahir)}
+                required
+              />
+            </Field>
+          </div>
 
-              {/* Jenis Kelamin & Umur */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="editJenisKelamin"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Jenis Kelamin
-                  </label>
-                  <Select
-                    id="editJenisKelamin"
-                    name="jenisKelamin"
-                    options={[
-                      { value: "Laki-laki", label: "Laki-laki" },
-                      { value: "Perempuan", label: "Perempuan" },
-                      { value: "Other", label: "Lainnya" },
-                    ]}
-                    onChange={handleEditPatientSelectChange}
-                    value={
-                      [
-                        { value: "Laki-laki", label: "Laki-laki" },
-                        { value: "Perempuan", label: "Perempuan" },
-                        { value: "Other", label: "Lainnya" },
-                      ].find(
-                        (opt) => opt.value === editPatientForm.jenisKelamin
-                      ) || null
-                    }
-                    className={`mt-1 block w-full ${
-                      editPatientErrors.jenisKelamin ? "border-red-500" : ""
-                    }`}
-                    classNamePrefix="react-select"
-                    placeholder="Pilih Jenis Kelamin"
-                    isClearable
-                    required
-                  />
-                  {editPatientErrors.jenisKelamin && (
-                    <p className="mt-1 text-sm text-red-500">
-                      {editPatientErrors.jenisKelamin}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label
-                    htmlFor="editTanggalLahir"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Tanggal Lahir
-                  </label>
-                  <input
-                    type="date"
-                    id="editTanggalLahir"
-                    name="tanggalLahir"
-                    value={editPatientForm.tanggalLahir || ""}
-                    onChange={handleEditPatientChange}
-                    className={`mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                      editPatientErrors.tanggalLahir
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
-                    min="0"
-                    max="150"
-                    required
-                  />
-                  {editPatientErrors.tanggalLahir && (
-                    <p className="mt-1 text-sm text-red-500">
-                      {editPatientErrors.tanggalLahir}
-                    </p>
-                  )}
-                </div>
-              </div>
+          {/* No. HP */}
+          <Field label="No. HP" htmlFor="editNoHP" error={editPatientErrors.noHP}>
+            <Input
+              type="text"
+              id="editNoHP"
+              name="noHP"
+              value={editPatientForm.noHP || ""}
+              onChange={handleEditPatientChange}
+              error={Boolean(editPatientErrors.noHP)}
+              required
+              minLength="10"
+              maxLength="15"
+              pattern="[0-9]+"
+              title="No. HP hanya boleh angka, minimal 10 digit, maksimal 15 digit"
+            />
+          </Field>
 
-              {/* No. HP */}
-              <div>
-                <label
-                  htmlFor="editNoHP"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  No. HP
-                </label>
-                <input
-                  type="text"
-                  id="editNoHP"
-                  name="noHP"
-                  value={editPatientForm.noHP || ""}
-                  onChange={handleEditPatientChange}
-                  className={`mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                    editPatientErrors.noHP
-                      ? "border-red-500"
-                      : "border-gray-300"
-                  }`}
-                  required
-                  minLength="10"
-                  maxLength="15"
-                  pattern="[0-9]+"
-                  title="No. HP hanya boleh angka, minimal 10 digit, maksimal 15 digit"
-                />
-                {editPatientErrors.noHP && (
-                  <p className="mt-1 text-sm text-red-500">
-                    {editPatientErrors.noHP}
-                  </p>
-                )}
-              </div>
+          {/* Tensi, TB, BB */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field
+              label="Tensi (Sistolik)"
+              htmlFor="editTensiSistolik"
+              error={editPatientErrors["tensi.sistolik"]}
+            >
+              <Input
+                type="number"
+                id="editTensiSistolik"
+                name="tensi.sistolik"
+                value={editPatientForm.tensi?.sistolik || ""}
+                onChange={handleEditPatientChange}
+                error={Boolean(editPatientErrors["tensi.sistolik"])}
+                min="60"
+                max="200"
+                placeholder="mmHg"
+              />
+            </Field>
+            <Field
+              label="Tensi (Diastolik)"
+              htmlFor="editTensiDiastolik"
+              error={editPatientErrors["tensi.diastolik"]}
+            >
+              <Input
+                type="number"
+                id="editTensiDiastolik"
+                name="tensi.diastolik"
+                value={editPatientForm.tensi?.diastolik || ""}
+                onChange={handleEditPatientChange}
+                error={Boolean(editPatientErrors["tensi.diastolik"])}
+                min="40"
+                max="120"
+                placeholder="mmHg"
+              />
+            </Field>
+            <Field
+              label="Tinggi Badan (cm)"
+              htmlFor="editTinggiBadan"
+              error={editPatientErrors.tinggiBadan}
+            >
+              <Input
+                type="number"
+                id="editTinggiBadan"
+                name="tinggiBadan"
+                value={editPatientForm.tinggiBadan || ""}
+                onChange={handleEditPatientChange}
+                error={Boolean(editPatientErrors.tinggiBadan)}
+                min="50"
+                max="250"
+                placeholder="cm"
+              />
+            </Field>
+            <Field
+              label="Berat Badan (kg)"
+              htmlFor="editBeratBadan"
+              error={editPatientErrors.beratBadan}
+            >
+              <Input
+                type="number"
+                id="editBeratBadan"
+                name="beratBadan"
+                value={editPatientForm.beratBadan || ""}
+                onChange={handleEditPatientChange}
+                error={Boolean(editPatientErrors.beratBadan)}
+                min="10"
+                max="300"
+                placeholder="kg"
+              />
+            </Field>
+          </div>
 
-              {/* Tensi, TB, BB */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="editTensiSistolik"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Tensi (Sistolik)
-                  </label>
-                  <input
-                    type="number"
-                    id="editTensiSistolik"
-                    name="tensi.sistolik"
-                    value={editPatientForm.tensi?.sistolik || ""}
-                    onChange={handleEditPatientChange}
-                    className={`mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                      editPatientErrors["tensi.sistolik"]
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
-                    min="60"
-                    max="200"
-                    placeholder="mmHg"
-                  />
-                  {editPatientErrors["tensi.sistolik"] && (
-                    <p className="mt-1 text-sm text-red-500">
-                      {editPatientErrors["tensi.sistolik"]}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label
-                    htmlFor="editTensiDiastolik"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Tensi (Diastolik)
-                  </label>
-                  <input
-                    type="number"
-                    id="editTensiDiastolik"
-                    name="tensi.diastolik"
-                    value={editPatientForm.tensi?.diastolik || ""}
-                    onChange={handleEditPatientChange}
-                    className={`mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                      editPatientErrors["tensi.diastolik"]
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
-                    min="40"
-                    max="120"
-                    placeholder="mmHg"
-                  />
-                  {editPatientErrors["tensi.diastolik"] && (
-                    <p className="mt-1 text-sm text-red-500">
-                      {editPatientErrors["tensi.diastolik"]}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label
-                    htmlFor="editTinggiBadan"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Tinggi Badan (cm)
-                  </label>
-                  <input
-                    type="number"
-                    id="editTinggiBadan"
-                    name="tinggiBadan"
-                    value={editPatientForm.tinggiBadan || ""}
-                    onChange={handleEditPatientChange}
-                    className={`mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                      editPatientErrors.tinggiBadan
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
-                    min="50"
-                    max="250"
-                    placeholder="cm"
-                  />
-                  {editPatientErrors.tinggiBadan && (
-                    <p className="mt-1 text-sm text-red-500">
-                      {editPatientErrors.tinggiBadan}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label
-                    htmlFor="editBeratBadan"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Berat Badan (kg)
-                  </label>
-                  <input
-                    type="number"
-                    id="editBeratBadan"
-                    name="beratBadan"
-                    value={editPatientForm.beratBadan || ""}
-                    onChange={handleEditPatientChange}
-                    className={`mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                      editPatientErrors.beratBadan
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
-                    min="10"
-                    max="300"
-                    placeholder="kg"
-                  />
-                  {editPatientErrors.beratBadan && (
-                    <p className="mt-1 text-sm text-red-500">
-                      {editPatientErrors.beratBadan}
-                    </p>
-                  )}
-                </div>
-              </div>
+          {/* Petugas yang Mengedit */}
+          <Field label="Petugas yang Mengedit:" htmlFor="petugasEditPasien">
+            <Select
+              id="petugasEditPasien"
+              name="petugasEditPasien"
+              options={petugasOptions}
+              onChange={(selected) =>
+                setPetugasEditPasien(selected ? selected.value : "")
+              }
+              value={
+                petugasOptions.find(
+                  (opt) => opt.value === petugasEditPasien
+                ) || null
+              }
+              styles={selectStyles()}
+              classNamePrefix="react-select"
+              placeholder="Pilih Petugas"
+              isClearable
+              required
+            />
+          </Field>
 
-              {/* Petugas yang Mengedit */}
-              <div>
-                <label
-                  htmlFor="petugasEditPasien"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Petugas yang Mengedit:
-                </label>
-                <Select
-                  id="petugasEditPasien"
-                  name="petugasEditPasien"
-                  options={petugasOptions}
-                  onChange={(selected) =>
-                    setPetugasEditPasien(selected ? selected.value : "")
-                  }
-                  value={
-                    petugasOptions.find(
-                      (opt) => opt.value === petugasEditPasien
-                    ) || null
-                  }
-                  classNamePrefix="react-select"
-                  placeholder="Pilih Petugas"
-                  isClearable
-                  required
-                />
-              </div>
-
-              <div className="mt-6 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={closeEditPatientModal}
-                  className="inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                  disabled={
-                    editPatientLoading || regionsLoading || !petugasEditPasien
-                  }
-                >
-                  {editPatientLoading || regionsLoading
-                    ? "Menyimpan..."
-                    : "Update Data Pasien"}
-                </button>
-              </div>
-            </form>
-          </Dialog.Panel>
-        </div>
-      </Dialog>
+          <div className="mt-6 flex justify-end gap-3">
+            <Button variant="secondary" type="button" onClick={closeEditPatientModal}>
+              Batal
+            </Button>
+            <Button
+              type="submit"
+              disabled={
+                editPatientLoading || regionsLoading || !petugasEditPasien
+              }
+              loading={editPatientLoading || regionsLoading}
+              loadingText="Menyimpan..."
+            >
+              Update Data Pasien
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Komponen Cetak: Dirender secara kondisional */}
       {patient && (
@@ -1677,30 +1369,41 @@ const PatientConsultationDetail = () => {
   );
 };
 
+const InfoItem = ({ label, valueClassName = "", children }) => (
+  <div>
+    <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+      {label}
+    </p>
+    <p className={`mt-0.5 text-sm text-gray-900 ${valueClassName}`}>{children}</p>
+  </div>
+);
+
 const AutoSaveIndicator = ({ status, lastSavedAt }) => {
-  const base = "text-xs font-medium inline-flex items-center gap-1.5";
-  switch (status) {
-    case "dirty":
-      return <span className={`${base} text-gray-400`}>Perubahan belum disimpan...</span>;
-    case "saving":
-      return (
-        <span className={`${base} text-blue-600`} data-testid="autosave-saving">
-          <span className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></span>
-          Menyimpan...
-        </span>
-      );
-    case "saved":
-      return (
-        <span className={`${base} text-green-600`} data-testid="autosave-saved">
-          ✓ Tersimpan
-          {lastSavedAt ? ` ${format(lastSavedAt, "HH:mm")}` : ""}
-        </span>
-      );
-    case "error":
-      return <span className={`${base} text-red-600`}>Auto-save gagal</span>;
-    default:
-      return null;
-  }
+  const toneMap = {
+    dirty: "bg-gray-100 text-gray-600 ring-gray-500/10",
+    saving: "bg-primary-50 text-primary-700 ring-primary-600/20",
+    saved: "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
+    error: "bg-red-50 text-red-700 ring-red-600/20",
+  };
+  if (!toneMap[status]) return null;
+  return (
+    <span
+      className={`badge ring-1 ring-inset ${toneMap[status]}`}
+      data-testid={`autosave-${status}`}
+    >
+      {status === "saving" && (
+        <span
+          className="h-3 w-3 animate-spin rounded-full border-2 border-primary-600 border-t-transparent"
+          aria-hidden="true"
+        />
+      )}
+      {status === "dirty" && "Perubahan belum disimpan..."}
+      {status === "saving" && "Menyimpan..."}
+      {status === "saved" &&
+        `Tersimpan${lastSavedAt ? ` ${format(lastSavedAt, "HH:mm")}` : ""}`}
+      {status === "error" && "Auto-save gagal"}
+    </span>
+  );
 };
 
 export default PatientConsultationDetail;

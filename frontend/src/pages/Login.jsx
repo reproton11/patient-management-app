@@ -32,36 +32,42 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 font-sans">
+    <div className="relative isolate flex min-h-screen items-center justify-center p-4 font-sans">
+      <div className="aurora-bg" aria-hidden="true" />
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="bg-white rounded-xl shadow-lg border border-gray-200 w-full max-w-md p-8"
+        transition={{ duration: 0.25 }}
+        className="card w-full max-w-md p-8"
       >
-        <div className="flex items-center justify-center mb-8">
+        <div className="mb-8 flex flex-col items-center text-center">
           <img
             src="/clinic-logo.png"
-            alt="Klinik Logo"
-            className="h-12 mr-3"
+            alt="Logo Klinik AZ"
+            className="mb-3 h-14"
             onError={(e) => {
               e.target.onerror = null;
               e.target.style.display = "none";
             }}
           />
-          <h1 className="text-3xl font-bold text-gray-800">Klinik AZ</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+            Klinik AZ
+          </h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Sistem Manajemen Pasien — silakan masuk untuk melanjutkan
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label
               htmlFor="username"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="field-label"
             >
               Username
             </label>
             <div className="relative">
-              <UserIcon className="h-5 w-5 text-gray-400 absolute left-3 top-2.5" />
+              <UserIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" aria-hidden="true" />
               <input
                 id="username"
                 type="text"
@@ -70,7 +76,7 @@ const Login = () => {
                 required
                 autoComplete="username"
                 placeholder="Masukkan username"
-                className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="input pl-10"
               />
             </div>
           </div>
@@ -78,12 +84,12 @@ const Login = () => {
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="field-label"
             >
               Password
             </label>
             <div className="relative">
-              <LockClosedIcon className="h-5 w-5 text-gray-400 absolute left-3 top-2.5" />
+              <LockClosedIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" aria-hidden="true" />
               <input
                 id="password"
                 type="password"
@@ -92,7 +98,7 @@ const Login = () => {
                 required
                 autoComplete="current-password"
                 placeholder="Masukkan password"
-                className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="input pl-10"
               />
             </div>
           </div>
@@ -100,11 +106,15 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-60 transition-colors"
+            className="btn-primary w-full py-2.5"
           >
             {loading ? "Memproses..." : "Masuk"}
           </button>
         </form>
+
+        <p className="mt-6 text-center text-xs text-gray-500">
+          &copy; {new Date().getFullYear()} Klinik AZ. All rights reserved.
+        </p>
       </motion.div>
     </div>
   );

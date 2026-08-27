@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   AreaChart,
@@ -38,6 +38,8 @@ import CustomTooltip from "../components/analytics/CustomTooltip";
 import AnalyticsSkeleton from "../components/analytics/Skeletons";
 import EmptyState from "../components/analytics/EmptyState";
 import ProgressRing from "../components/analytics/ProgressRing";
+import PageHeader from "../components/ui/PageHeader";
+import Button from "../components/ui/Button";
 import {
   CHART_COLORS,
   AXIS_TICK,
@@ -68,14 +70,14 @@ const formatDecimal = (value) =>
     : Number(value).toLocaleString("id-ID", { maximumFractionDigits: 1 });
 
 const ComparisonFooter = ({ leftLabel, leftValue, rightLabel, rightValue }) => (
-  <div className="pt-3 border-t border-gray-100 flex items-end justify-between text-xs">
+  <div className="flex items-end justify-between border-t border-gray-100 pt-3 text-xs">
     <div>
-      <p className="text-gray-400">{leftLabel}</p>
-      <p className="font-semibold text-gray-700 mt-0.5">{leftValue}</p>
+      <p className="text-gray-500">{leftLabel}</p>
+      <p className="mt-0.5 font-semibold text-gray-700">{leftValue}</p>
     </div>
     <div className="text-right">
-      <p className="text-gray-400">{rightLabel}</p>
-      <p className="font-semibold text-gray-700 mt-0.5">{rightValue}</p>
+      <p className="text-gray-500">{rightLabel}</p>
+      <p className="mt-0.5 font-semibold text-gray-700">{rightValue}</p>
     </div>
   </div>
 );
@@ -89,7 +91,7 @@ const GrowthValue = ({ value }) => {
         isPositive ? "text-emerald-600" : "text-red-600"
       }`}
     >
-      <Icon className="h-7 w-7" />
+      <Icon className="h-7 w-7" aria-hidden="true" />
       {formatPercent(value)}
     </span>
   );
@@ -118,7 +120,7 @@ const HorizontalBarList = ({
           type="category"
           dataKey="_id"
           width={120}
-          tick={{ ...AXIS_TICK, fontSize: 11 }}
+          tick={{ ...AXIS_TICK, fontSize: 12 }}
           tickLine={false}
           axisLine={false}
           tickFormatter={(value) => truncateLabel(value, 14)}
@@ -136,7 +138,7 @@ const HorizontalBarList = ({
             position="right"
             formatter={formatNumber}
             fill="#374151"
-            fontSize={12}
+            fontSize={13}
             fontWeight={600}
           />
         </Bar>
@@ -148,11 +150,11 @@ const HorizontalBarList = ({
 const MiniStatTile = ({ icon, tileClass, iconClass, label, value }) => {
   const Icon = icon;
   return (
-    <div className={`${tileClass} rounded-lg p-4 flex items-center gap-3`}>
-      <Icon className={`h-6 w-6 shrink-0 ${iconClass}`} />
+    <div className={`flex items-center gap-3 rounded-lg p-4 ${tileClass}`}>
+      <Icon className={`h-6 w-6 shrink-0 ${iconClass}`} aria-hidden="true" />
       <div className="min-w-0">
-        <p className="text-xs text-gray-500 leading-snug">{label}</p>
-        <p className="text-xl font-bold text-gray-900 mt-0.5 truncate">
+        <p className="text-xs leading-snug text-gray-500">{label}</p>
+        <p className="mt-0.5 truncate text-xl font-bold text-gray-900">
           {value}
         </p>
       </div>
@@ -188,26 +190,21 @@ const Analytics = () => {
   if (!analytics) {
     return (
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.25 }}
         className="flex flex-col items-center justify-center py-24 text-center"
       >
-        <ExclamationCircleIcon className="h-14 w-14 text-red-300 mb-4" />
+        <ExclamationCircleIcon className="mb-4 h-14 w-14 text-red-300" aria-hidden="true" />
         <h2 className="text-xl font-bold text-gray-900">
           Gagal memuat data analytics
         </h2>
-        <p className="text-sm text-gray-500 mt-1 mb-6">
+        <p className="mb-6 mt-1 text-sm text-gray-500">
           Periksa koneksi ke server lalu coba lagi.
         </p>
-        <button
-          type="button"
-          onClick={fetchAnalytics}
-          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors"
-        >
-          <RefreshIcon className="h-4 w-4" />
+        <Button icon={RefreshIcon} onClick={fetchAnalytics}>
           Coba Lagi
-        </button>
+        </Button>
       </motion.div>
     );
   }
@@ -225,42 +222,34 @@ const Analytics = () => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-8"
+      transition={{ duration: 0.25 }}
+      className="space-y-6"
     >
-      <div className="mb-8 pb-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold text-gray-900">
-            Analytics &amp; Insight
-          </h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Ringkasan performa klinik: pendaftaran, demografi, diagnosis, dan
-            retensi pasien.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={fetchAnalytics}
-          disabled={loading}
-          className="inline-flex items-center gap-2 self-start sm:self-auto rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-        >
-          <RefreshIcon
-            className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
-          />
-          Muat Ulang
-        </button>
-      </div>
+      <PageHeader
+        title="Analytics & Insight"
+        subtitle="Ringkasan performa klinik: pendaftaran, demografi, diagnosis, dan retensi pasien."
+        action={
+          <Button
+            variant="secondary"
+            icon={RefreshIcon}
+            onClick={fetchAnalytics}
+            disabled={loading}
+            className={loading ? "[&>svg]:animate-spin" : ""}
+          >
+            Muat Ulang
+          </Button>
+        }
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
         <StatCard
           icon={UserGroupIcon}
           label="Total Pasien Terdaftar"
           value={formatNumber(analytics.totalPasien)}
-          delay={0}
         >
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-500">
             Akumulasi seluruh pasien terdaftar
           </p>
         </StatCard>
@@ -300,9 +289,8 @@ const Analytics = () => {
 
       <ChartCard
         title="Tren Pendaftaran Pasien"
-        delay={0.15}
         action={
-          <span className="text-xs font-medium text-gray-400">
+          <span className="text-xs font-medium text-gray-500">
             7 hari terakhir
           </span>
         }
@@ -321,8 +309,8 @@ const Analytics = () => {
                   x2="0"
                   y2="1"
                 >
-                  <stop offset="0%" stopColor="#2563EB" stopOpacity={0.25} />
-                  <stop offset="100%" stopColor="#2563EB" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#0891B2" stopOpacity={0.25} />
+                  <stop offset="100%" stopColor="#0891B2" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid vertical={false} stroke={GRID_COLOR} />
@@ -330,7 +318,7 @@ const Analytics = () => {
                 dataKey="date"
                 tick={AXIS_TICK}
                 tickLine={false}
-                axisLine={{ stroke: "#E5E7EB" }}
+                axisLine={{ stroke: "#E2E8F0" }}
                 tickMargin={8}
               />
               <YAxis
@@ -342,13 +330,13 @@ const Analytics = () => {
               />
               <Tooltip
                 content={<CustomTooltip />}
-                cursor={{ stroke: "#93C5FD", strokeDasharray: "4 4" }}
+                cursor={{ stroke: "#67E8F9", strokeDasharray: "4 4" }}
               />
               <Area
                 type="monotone"
                 dataKey="count"
                 name="Pendaftaran"
-                stroke="#2563EB"
+                stroke="#0891B2"
                 strokeWidth={2.5}
                 fill="url(#registrationGradient)"
                 activeDot={{ r: 5, strokeWidth: 2, stroke: "#ffffff" }}
@@ -363,10 +351,10 @@ const Analytics = () => {
         )}
       </ChartCard>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <ChartCard title="Distribusi Jenis Kelamin" delay={0.25}>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <ChartCard title="Distribusi Jenis Kelamin">
           {genderData.length > 0 ? (
-            <div className="flex flex-col sm:flex-row items-center gap-6">
+            <div className="flex flex-col items-center gap-6 sm:flex-row">
               <div className="relative w-full sm:w-1/2">
                 <ResponsiveContainer width="100%" height={230}>
                   <PieChart>
@@ -392,21 +380,21 @@ const Analytics = () => {
                     <Tooltip content={<CustomTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-2xl font-extrabold text-gray-900">
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-2xl font-bold tracking-tight text-gray-900">
                     {formatNumber(genderTotal)}
                   </span>
                   <span className="text-xs text-gray-500">Total Pasien</span>
                 </div>
               </div>
-              <ul className="w-full sm:flex-1 space-y-3">
+              <ul className="w-full flex-1 space-y-3 sm:w-auto">
                 {genderData.map((entry, index) => (
                   <li
                     key={`gender-legend-${index}`}
                     className="flex items-center gap-2 text-sm"
                   >
                     <span
-                      className="h-3 w-3 rounded-full shrink-0"
+                      className="h-3 w-3 shrink-0 rounded-full"
                       style={{
                         backgroundColor:
                           CHART_COLORS[index % CHART_COLORS.length],
@@ -418,7 +406,7 @@ const Analytics = () => {
                     <span className="ml-auto font-semibold text-gray-900">
                       {formatNumber(entry.count)}
                     </span>
-                    <span className="w-12 text-right text-xs text-gray-400">
+                    <span className="w-12 text-right text-xs text-gray-500">
                       {genderTotal > 0
                         ? `${Math.round((entry.count / genderTotal) * 100)}%`
                         : "-"}
@@ -435,7 +423,7 @@ const Analytics = () => {
           )}
         </ChartCard>
 
-        <ChartCard title="Distribusi Usia" delay={0.3}>
+        <ChartCard title="Distribusi Usia">
           {ageData.length > 0 ? (
             <ResponsiveContainer width="100%" height={280}>
               <BarChart
@@ -445,9 +433,9 @@ const Analytics = () => {
                 <CartesianGrid vertical={false} stroke={GRID_COLOR} />
                 <XAxis
                   dataKey="_id"
-                  tick={{ ...AXIS_TICK, fontSize: 11 }}
+                  tick={{ ...AXIS_TICK, fontSize: 12 }}
                   tickLine={false}
-                  axisLine={{ stroke: "#E5E7EB" }}
+                  axisLine={{ stroke: "#E2E8F0" }}
                   tickMargin={8}
                 />
                 <YAxis
@@ -461,7 +449,7 @@ const Analytics = () => {
                 <Bar
                   dataKey="count"
                   name="Jumlah Pasien"
-                  fill="#2563EB"
+                  fill="#0891B2"
                   radius={[6, 6, 0, 0]}
                   maxBarSize={48}
                 >
@@ -470,7 +458,7 @@ const Analytics = () => {
                     position="top"
                     formatter={formatNumber}
                     fill="#374151"
-                    fontSize={12}
+                    fontSize={13}
                     fontWeight={600}
                   />
                 </Bar>
@@ -481,7 +469,7 @@ const Analytics = () => {
           )}
         </ChartCard>
 
-        <ChartCard title="Distribusi Provinsi (Top 10)" delay={0.4}>
+        <ChartCard title="Distribusi Provinsi (Top 10)">
           <HorizontalBarList
             data={provinceData}
             color="#8B5CF6"
@@ -489,7 +477,7 @@ const Analytics = () => {
           />
         </ChartCard>
 
-        <ChartCard title="Distribusi Kabupaten (Top 10)" delay={0.45}>
+        <ChartCard title="Distribusi Kabupaten (Top 10)">
           <HorizontalBarList
             data={regencyData}
             color="#0EA5E9"
@@ -498,7 +486,7 @@ const Analytics = () => {
         </ChartCard>
       </div>
 
-      <ChartCard title="Top 5 Diagnosis Terbanyak" delay={0.55}>
+      <ChartCard title="Top 5 Diagnosis Terbanyak">
         <HorizontalBarList
           data={topDiagnoses}
           color="#F59E0B"
@@ -507,8 +495,8 @@ const Analytics = () => {
         />
       </ChartCard>
 
-      <ChartCard title="Rata-rata Vital Stats" delay={0.65}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <ChartCard title="Rata-rata Vital Stats">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <MiniStatTile
             icon={HeartIcon}
             tileClass="bg-rose-50"
@@ -540,10 +528,10 @@ const Analytics = () => {
         </div>
       </ChartCard>
 
-      <ChartCard title="Retensi Pasien" delay={0.75}>
-        <div className="flex flex-col lg:flex-row items-center gap-8 py-2">
+      <ChartCard title="Retensi Pasien">
+        <div className="flex flex-col items-center gap-8 py-2 lg:flex-row">
           <ProgressRing value={retention.retentionRate} label="pasien kembali" />
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 flex-1 w-full">
+          <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
             <MiniStatTile
               icon={UserGroupIcon}
               tileClass="bg-violet-50"

@@ -5,6 +5,15 @@ import api from "../services/api";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { Link } from "react-router-dom";
+import Card from "../components/ui/Card";
+import PageHeader from "../components/ui/PageHeader";
+import Badge from "../components/ui/Badge";
+
+const fadeIn = {
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.25 },
+};
 
 const Dashboard = () => {
   const [stats, setStats] = useState({ today: 0, week: 0, month: 0 });
@@ -34,52 +43,61 @@ const Dashboard = () => {
   }, []);
 
   if (loading)
-    return <div className="text-center py-8">Memuat data dashboard...</div>;
+    return (
+      <div className="animate-pulse space-y-6">
+        <div className="h-7 w-56 rounded-lg bg-gray-200" />
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-28 rounded-xl bg-gray-200" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="h-72 rounded-xl bg-gray-200" />
+          <div className="h-72 rounded-xl bg-gray-200" />
+        </div>
+      </div>
+    );
   if (error)
-    return <div className="text-center py-8 text-red-500">{error}</div>;
+    return <div className="text-center py-8 text-red-600">{error}</div>;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-8"
-    >
-      <h1 className="text-4xl font-extrabold text-gray-900 mb-8 border-b pb-4">
-        Dashboard Klinik
-      </h1>
+    <motion.div {...fadeIn} className="space-y-6">
+      <PageHeader
+        title="Dashboard Klinik"
+        subtitle="Ringkasan aktivitas pendaftaran dan layanan hari ini"
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
         <StatCard title="Pasien Baru Hari Ini" value={stats.today} />
         <StatCard title="Pasien Baru Minggu Ini" value={stats.week} />
         <StatCard title="Pasien Baru Bulan Ini" value={stats.month} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <motion.div
-          className="bg-white p-6 rounded-xl shadow-lg border border-gray-200"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b pb-3">
-            Pasien Baru Hari Ini
-          </h2>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <Card className="p-6">
+          <Card.Header
+            title="Pasien Baru Hari Ini"
+            action={
+              <Badge tone="blue">{recentPatients.length} pasien</Badge>
+            }
+          />
           {recentPatients.length > 0 ? (
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               {recentPatients.map((patient) => (
-                <li
-                  key={patient._id}
-                  className="flex items-center p-3 bg-blue-50 rounded-lg text-blue-800 hover:bg-blue-100 transition duration-200 cursor-pointer"
-                >
+                <li key={patient._id}>
                   <Link
                     to={`/consultations/${patient._id}`}
-                    className="flex items-center flex-1"
+                    className="group flex items-center rounded-lg border border-transparent px-3 py-2.5 transition-colors hover:border-primary-100 hover:bg-primary-50"
                   >
-                    <span className="font-medium mr-2">{patient.nama}</span> -{" "}
-                    {patient.noKartu}
+                    <span className="font-medium text-gray-900 group-hover:text-primary-700">
+                      {patient.nama}
+                    </span>
+                    <span className="mx-2 text-gray-300" aria-hidden="true">
+                      ·
+                    </span>
+                    <span className="text-sm text-gray-500">{patient.noKartu}</span>
                     {patient.tanggalDaftar && (
-                      <span className="ml-auto text-sm text-blue-600">
+                      <span className="ml-auto text-xs font-medium text-gray-500">
                         {format(new Date(patient.tanggalDaftar), "HH:mm", {
                           locale: id,
                         })}{" "}
@@ -91,38 +109,37 @@ const Dashboard = () => {
               ))}
             </ul>
           ) : (
-            <p className="text-gray-600">Tidak ada pasien baru hari ini.</p>
+            <p className="py-4 text-center text-sm text-gray-500">
+              Tidak ada pasien baru hari ini.
+            </p>
           )}
-        </motion.div>
+        </Card>
 
-        <motion.div
-          className="bg-white p-6 rounded-xl shadow-lg border border-gray-200"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b pb-3">
-            Log Aktivitas Petugas
-          </h2>
+        <Card className="p-6">
+          <Card.Header title="Log Aktivitas Petugas" />
           {activityLogs.length > 0 ? (
-            <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+            <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
               {activityLogs.map((log, index) => (
                 <div
                   key={index}
-                  className="p-3 bg-gray-50 rounded-lg border border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col rounded-lg border border-gray-200 bg-gray-50 p-3 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="flex-1">
-                    <p className="text-gray-800 font-medium">
-                      <span className="text-blue-600">{log.oleh}</span>{" "}
+                    <p className="text-sm text-gray-800">
+                      <span className="font-semibold text-primary-700">
+                        {log.oleh}
+                      </span>{" "}
                       {(log.aksi || "").toLowerCase()}{" "}
                       {(log.type || "").toLowerCase()}{" "}
                       <span className="font-semibold">{log.entityName}</span> (
                       {log.noKartu})
                     </p>
-                    <p className="text-sm text-gray-500">{log.catatan}</p>
+                    {log.catatan ? (
+                      <p className="mt-0.5 text-sm text-gray-500">{log.catatan}</p>
+                    ) : null}
                   </div>
                   {log.pada && (
-                    <span className="text-xs text-gray-500 mt-2 sm:mt-0 sm:ml-4 flex-shrink-0">
+                    <span className="mt-2 flex-shrink-0 text-xs text-gray-500 sm:ml-4 sm:mt-0">
                       {format(new Date(log.pada), "dd-MM-yyyy HH:mm", {
                         locale: id,
                       })}
@@ -132,9 +149,11 @@ const Dashboard = () => {
               ))}
             </div>
           ) : (
-            <p className="text-gray-600">Tidak ada aktivitas terbaru.</p>
+            <p className="py-4 text-center text-sm text-gray-500">
+              Tidak ada aktivitas terbaru.
+            </p>
           )}
-        </motion.div>
+        </Card>
       </div>
     </motion.div>
   );
@@ -142,12 +161,14 @@ const Dashboard = () => {
 
 const StatCard = ({ title, value }) => (
   <motion.div
-    className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 text-center"
-    whileHover={{ scale: 1.02 }}
-    transition={{ type: "spring", stiffness: 400, damping: 10 }}
+    className="card card-hover p-6"
+    whileHover={{ y: -2 }}
+    transition={{ duration: 0.15 }}
   >
-    <h3 className="text-lg font-medium text-gray-600 mb-2">{title}</h3>
-    <p className="text-5xl font-extrabold text-blue-600">{value}</p>
+    <h3 className="text-sm font-medium text-gray-500">{title}</h3>
+    <p className="mt-2 text-4xl font-bold tracking-tight text-primary-600">
+      {value.toLocaleString("id-ID")}
+    </p>
   </motion.div>
 );
 
