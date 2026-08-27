@@ -19,3 +19,8 @@ node_modules/
 # Build outputs
 dist/
 build/
+
+# Design docs & review artifacts (lokal saja)
+DESIGN.md
+PRODUCT.md
+.impeccable/
