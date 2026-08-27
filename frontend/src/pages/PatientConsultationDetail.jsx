@@ -678,7 +678,7 @@ const PatientConsultationDetail = () => {
     >
       <PageHeader
         title={`Konsultasi Pasien: ${patient.nama}`}
-        subtitle={`No. Kartu ${patient.noKartu} â€¢ ${patient.jenisKelamin} â€¢ ${
+        subtitle={`No. Kartu ${patient.noKartu} • ${patient.jenisKelamin} • ${
           patient.tanggalLahir ? `${calculateAge(patient.tanggalLahir)} tahun` : "-"
         }`}
         breadcrumb={[{ label: "Konsultasi Pasien", to: "/consultations" }, { label: patient.nama }]}
