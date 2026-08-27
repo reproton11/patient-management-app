@@ -38,6 +38,7 @@ import CustomTooltip from "../components/analytics/CustomTooltip";
 import AnalyticsSkeleton from "../components/analytics/Skeletons";
 import EmptyState from "../components/analytics/EmptyState";
 import ProgressRing from "../components/analytics/ProgressRing";
+import DistributionMap from "../components/analytics/DistributionMap";
 import PageHeader from "../components/ui/PageHeader";
 import Button from "../components/ui/Button";
 import {
@@ -214,7 +215,7 @@ const Analytics = () => {
   const genderData = analytics.demographics?.gender ?? [];
   const ageData = sortAgeDistribution(analytics.demographics?.age ?? []);
   const provinceData = analytics.demographics?.province ?? [];
-  const regencyData = analytics.demographics?.regency ?? [];
+  const regencyByProvince = analytics.demographics?.regencyByProvince ?? [];
   const topDiagnoses = analytics.topDiagnoses ?? [];
   const vitalStats = analytics.vitalStats ?? {};
   const retention = analytics.retention ?? {};
@@ -469,22 +470,18 @@ const Analytics = () => {
           )}
         </ChartCard>
 
-        <ChartCard title="Distribusi Provinsi (Top 10)">
-          <HorizontalBarList
-            data={provinceData}
-            color="#8B5CF6"
-            emptyMessage="Belum ada data provinsi"
-          />
-        </ChartCard>
-
-        <ChartCard title="Distribusi Kabupaten (Top 10)">
-          <HorizontalBarList
-            data={regencyData}
-            color="#0EA5E9"
-            emptyMessage="Belum ada data kabupaten"
-          />
-        </ChartCard>
       </div>
+
+      <ChartCard
+        title="Peta Distribusi Pasien"
+        action={
+          <span className="text-xs font-medium text-gray-500">
+            Klik provinsi untuk detail kabupaten/kota
+          </span>
+        }
+      >
+        <DistributionMap data={provinceData} regencyByProvince={regencyByProvince} />
+      </ChartCard>
 
       <ChartCard title="Top 5 Diagnosis Terbanyak">
         <HorizontalBarList

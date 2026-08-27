@@ -1,8 +1,7 @@
-// patient-management-app/frontend/src/pages/RegisterPatient.jsx
+﻿// patient-management-app/frontend/src/pages/RegisterPatient.jsx
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import api from "../services/api";
-import Select from "react-select";
 import { toast } from "react-toastify";
 import useIndonesiaRegions from "../hooks/useIndonesiaRegions";
 import { toTitleCase } from "../utils/helpers";
@@ -10,38 +9,20 @@ import Card from "../components/ui/Card";
 import PageHeader from "../components/ui/PageHeader";
 import Button from "../components/ui/Button";
 import Field, { Input } from "../components/ui/Field";
+import SelectInput from "../components/ui/SelectInput";
 
 const petugasOptions = [
   { value: "Heni", label: "Heni" },
   { value: "Maria", label: "Maria" },
   { value: "Emy", label: "Emy" },
   { value: "Aziz", label: "Aziz" },
-];
+].sort((a, b) => a.label.localeCompare(b.label, "id"));
 
 const jenisKelaminOptions = [
   { value: "Laki-laki", label: "Laki-laki" },
   { value: "Perempuan", label: "Perempuan" },
   { value: "Other", label: "Lainnya" },
 ];
-
-const selectStyles = (error = false) => ({
-  control: (base) => ({
-    ...base,
-    minHeight: 42,
-    borderRadius: 8,
-    borderColor: error ? "#ef4444" : "#d1d5db",
-    boxShadow: "none",
-    fontSize: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.75)",
-    "&:hover": { borderColor: error ? "#ef4444" : "#9ca3af" },
-  }),
-  menu: (base) => ({ ...base, fontSize: 16 }),
-  option: (base, state) => ({
-    ...base,
-    backgroundColor: state.isFocused ? "#eff6ff" : "transparent",
-    color: state.isFocused ? "#1d4ed8" : "#374151",
-  }),
-});
 
 const emptyForm = {
   nama: "",
@@ -239,7 +220,7 @@ const RegisterPatient = () => {
                 required
                 error={errors["alamat.provinsi"]}
               >
-                <Select
+                <SelectInput
                   id="provinsi"
                   name="alamat.provinsi"
                   options={provinces}
@@ -249,7 +230,7 @@ const RegisterPatient = () => {
                       (opt) => opt.label === formData.alamat.provinsi
                     ) || null
                   }
-                  styles={selectStyles(Boolean(errors["alamat.provinsi"]))}
+                  error={Boolean(errors["alamat.provinsi"])}
                   classNamePrefix="react-select"
                   placeholder="Pilih Provinsi"
                   isClearable
@@ -263,7 +244,7 @@ const RegisterPatient = () => {
                 required
                 error={errors["alamat.kabupaten"]}
               >
-                <Select
+                <SelectInput
                   id="kabupaten"
                   name="alamat.kabupaten"
                   options={regencies}
@@ -273,7 +254,7 @@ const RegisterPatient = () => {
                       (opt) => opt.label === formData.alamat.kabupaten
                     ) || null
                   }
-                  styles={selectStyles(Boolean(errors["alamat.kabupaten"]))}
+                  error={Boolean(errors["alamat.kabupaten"])}
                   classNamePrefix="react-select"
                   placeholder="Pilih Kabupaten/Kota"
                   isClearable
@@ -287,7 +268,7 @@ const RegisterPatient = () => {
                 required
                 error={errors["alamat.kecamatan"]}
               >
-                <Select
+                <SelectInput
                   id="kecamatan"
                   name="alamat.kecamatan"
                   options={districts}
@@ -297,7 +278,7 @@ const RegisterPatient = () => {
                       (opt) => opt.label === formData.alamat.kecamatan
                     ) || null
                   }
-                  styles={selectStyles(Boolean(errors["alamat.kecamatan"]))}
+                  error={Boolean(errors["alamat.kecamatan"])}
                   classNamePrefix="react-select"
                   placeholder="Pilih Kecamatan"
                   isClearable
@@ -311,7 +292,7 @@ const RegisterPatient = () => {
                 required
                 error={errors["alamat.kelurahan"]}
               >
-                <Select
+                <SelectInput
                   id="kelurahan"
                   name="alamat.kelurahan"
                   options={villages}
@@ -321,7 +302,7 @@ const RegisterPatient = () => {
                       (opt) => opt.label === formData.alamat.kelurahan
                     ) || null
                   }
-                  styles={selectStyles(Boolean(errors["alamat.kelurahan"]))}
+                  error={Boolean(errors["alamat.kelurahan"])}
                   classNamePrefix="react-select"
                   placeholder="Pilih Kelurahan/Desa"
                   isClearable
@@ -344,7 +325,7 @@ const RegisterPatient = () => {
                 required
                 error={errors.jenisKelamin}
               >
-                <Select
+                <SelectInput
                   id="jenisKelamin"
                   name="jenisKelamin"
                   options={jenisKelaminOptions}
@@ -354,7 +335,7 @@ const RegisterPatient = () => {
                       (opt) => opt.value === formData.jenisKelamin
                     ) || null
                   }
-                  styles={selectStyles(Boolean(errors.jenisKelamin))}
+                  error={Boolean(errors.jenisKelamin)}
                   classNamePrefix="react-select"
                   placeholder="Pilih Jenis Kelamin"
                   isClearable
@@ -481,7 +462,7 @@ const RegisterPatient = () => {
             required
             error={errors.petugasPendaftaran}
           >
-            <Select
+            <SelectInput
               id="petugasPendaftaran"
               name="petugasPendaftaran"
               options={petugasOptions}
@@ -491,7 +472,7 @@ const RegisterPatient = () => {
                   (opt) => opt.value === formData.petugasPendaftaran
                 ) || null
               }
-              styles={selectStyles(Boolean(errors.petugasPendaftaran))}
+              error={Boolean(errors.petugasPendaftaran)}
               classNamePrefix="react-select"
               placeholder="Pilih Petugas"
               isClearable

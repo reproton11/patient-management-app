@@ -58,6 +58,7 @@ exports.getAnalyticsSummary = asyncHandler(async (req, res) => {
     ageDistribution,
     provinceDistribution,
     regencyDistribution,
+    regencyByProvinceDistribution,
     topDiagnoses,
     vitalStatsAgg,
     consultationCountsAgg,
@@ -112,12 +113,23 @@ exports.getAnalyticsSummary = asyncHandler(async (req, res) => {
     Pasien.aggregate([
       { $group: { _id: "$alamat.provinsi", count: { $sum: 1 } } },
       { $sort: { count: -1 } },
-      { $limit: 10 },
     ]),
     Pasien.aggregate([
       { $group: { _id: "$alamat.kabupaten", count: { $sum: 1 } } },
       { $sort: { count: -1 } },
       { $limit: 10 },
+    ]),
+    Pasien.aggregate([
+      {
+        $group: {
+          _id: {
+            provinsi: "$alamat.provinsi",
+            kabupaten: "$alamat.kabupaten",
+          },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { count: -1 } },
     ]),
     Konsultasi.aggregate([
       { $match: { "soap.A": { $exists: true, $ne: "" } } },
@@ -191,6 +203,7 @@ exports.getAnalyticsSummary = asyncHandler(async (req, res) => {
       age: ageDistribution,
       province: provinceDistribution,
       regency: regencyDistribution,
+      regencyByProvince: regencyByProvinceDistribution,
     },
     topDiagnoses,
     vitalStats: vitalStatsAgg[0] || {

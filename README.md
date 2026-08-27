@@ -8,7 +8,7 @@ Aplikasi manajemen pasien & konsultasi klinik: pendaftaran pasien, rekam SOAP ko
 | Backend | Node.js, Express 5, MongoDB (Mongoose 8), JWT Auth |
 | Deploy | Vercel (frontend) + Railway (backend) |
 
-UI memakai tema **clean medical**: aksen cyan `#0891B2` + emerald, font Figtree, kartu glassmorphism lembut di atas latar aurora, dan tabel data responsif dengan sorting, pencarian, dan filter.
+UI memakai tema **clean medical**: aksen cyan `#0891B2` + emerald, font Figtree, kartu glassmorphism lembut di atas latar aurora, dan tabel data responsif dengan sorting, pencarian, dan filter. Halaman Analytics menyertakan **peta choropleth sebaran pasien per provinsi** (klik provinsi → detail kabupaten/kota).
 
 ## Struktur Proyek
 
@@ -17,7 +17,7 @@ patient-management-app/
 ├── frontend/          # React SPA
 │   └── src/
 │       ├── components/ui/        # Primitif UI: Button, Card, DataTable, Modal, Field, dll
-│       ├── components/analytics/ # Komponen chart analytics
+│       ├── components/analytics/ # Komponen chart & peta distribusi (choropleth d3-geo)
 │       ├── hooks/                # useIndonesiaRegions
 │       ├── layouts/              # DefaultLayout (sidebar + drawer mobile)
 │       ├── pages/                # Halaman (lazy-loaded)

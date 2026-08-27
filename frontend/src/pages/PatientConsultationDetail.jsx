@@ -1,4 +1,4 @@
-// patient-management-app/frontend/src/pages/PatientConsultationDetail.jsx
+﻿// patient-management-app/frontend/src/pages/PatientConsultationDetail.jsx
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -6,7 +6,6 @@ import api from "../services/api";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { toast } from "react-toastify";
-import Select from "react-select";
 import {
   DocumentTextIcon,
   PrinterIcon,
@@ -24,6 +23,7 @@ import Modal from "../components/ui/Modal";
 import Button from "../components/ui/Button";
 import Field, { Input, Textarea } from "../components/ui/Field";
 import Pagination from "../components/ui/Pagination";
+import SelectInput from "../components/ui/SelectInput";
 
 const AUTOSAVE_DELAY_MS = 3000;
 
@@ -32,32 +32,13 @@ const petugasOptions = [
   { value: "Maria", label: "Maria" },
   { value: "Emy", label: "Emy" },
   { value: "Aziz", label: "Aziz" },
-];
+].sort((a, b) => a.label.localeCompare(b.label, "id"));
 
 const jenisKelaminOptions = [
   { value: "Laki-laki", label: "Laki-laki" },
   { value: "Perempuan", label: "Perempuan" },
   { value: "Other", label: "Lainnya" },
 ];
-
-const selectStyles = (error = false) => ({
-  control: (base) => ({
-    ...base,
-    minHeight: 42,
-    borderRadius: 8,
-    borderColor: error ? "#ef4444" : "#d1d5db",
-    boxShadow: "none",
-    fontSize: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.75)",
-    "&:hover": { borderColor: error ? "#ef4444" : "#9ca3af" },
-  }),
-  menu: (base) => ({ ...base, fontSize: 16 }),
-  option: (base, state) => ({
-    ...base,
-    backgroundColor: state.isFocused ? "#eff6ff" : "transparent",
-    color: state.isFocused ? "#1d4ed8" : "#374151",
-  }),
-});
 
 const buildSoapSnapshot = (soapForm, therapy) =>
   JSON.stringify({ soapForm, therapy });
@@ -697,7 +678,7 @@ const PatientConsultationDetail = () => {
     >
       <PageHeader
         title={`Konsultasi Pasien: ${patient.nama}`}
-        subtitle={`No. Kartu ${patient.noKartu} • ${patient.jenisKelamin} • ${
+        subtitle={`No. Kartu ${patient.noKartu} â€¢ ${patient.jenisKelamin} â€¢ ${
           patient.tanggalLahir ? `${calculateAge(patient.tanggalLahir)} tahun` : "-"
         }`}
         breadcrumb={[{ label: "Konsultasi Pasien", to: "/consultations" }, { label: patient.nama }]}
@@ -1001,7 +982,7 @@ const PatientConsultationDetail = () => {
                   : undefined
               }
             >
-              <Select
+              <SelectInput
                 id="petugasKonsultasi"
                 name="petugasKonsultasi"
                 options={petugasOptions}
@@ -1013,7 +994,7 @@ const PatientConsultationDetail = () => {
                     (opt) => opt.value === petugasKonsultasi
                   ) || null
                 }
-                styles={selectStyles(Boolean(formErrors.petugasKonsultasi))}
+                error={Boolean(formErrors.petugasKonsultasi)}
                 classNamePrefix="react-select"
                 placeholder="Pilih Petugas Konsultasi"
                 isClearable
@@ -1076,7 +1057,7 @@ const PatientConsultationDetail = () => {
               htmlFor="editProvinsi"
               error={editPatientErrors["alamat.provinsi"]}
             >
-              <Select
+              <SelectInput
                 id="editProvinsi"
                 name="alamat.provinsi"
                 options={provinces}
@@ -1086,7 +1067,7 @@ const PatientConsultationDetail = () => {
                     (opt) => opt.label === editPatientForm.alamat?.provinsi
                   ) || null
                 }
-                styles={selectStyles(Boolean(editPatientErrors["alamat.provinsi"]))}
+                error={Boolean(editPatientErrors["alamat.provinsi"])}
                 classNamePrefix="react-select"
                 placeholder="Pilih Provinsi"
                 isClearable
@@ -1099,7 +1080,7 @@ const PatientConsultationDetail = () => {
               htmlFor="editKabupaten"
               error={editPatientErrors["alamat.kabupaten"]}
             >
-              <Select
+              <SelectInput
                 id="editKabupaten"
                 name="alamat.kabupaten"
                 options={regencies}
@@ -1109,7 +1090,7 @@ const PatientConsultationDetail = () => {
                     (opt) => opt.label === editPatientForm.alamat?.kabupaten
                   ) || null
                 }
-                styles={selectStyles(Boolean(editPatientErrors["alamat.kabupaten"]))}
+                error={Boolean(editPatientErrors["alamat.kabupaten"])}
                 classNamePrefix="react-select"
                 placeholder="Pilih Kabupaten/Kota"
                 isClearable
@@ -1124,7 +1105,7 @@ const PatientConsultationDetail = () => {
               htmlFor="editKecamatan"
               error={editPatientErrors["alamat.kecamatan"]}
             >
-              <Select
+              <SelectInput
                 id="editKecamatan"
                 name="alamat.kecamatan"
                 options={districts}
@@ -1134,7 +1115,7 @@ const PatientConsultationDetail = () => {
                     (opt) => opt.label === editPatientForm.alamat?.kecamatan
                   ) || null
                 }
-                styles={selectStyles(Boolean(editPatientErrors["alamat.kecamatan"]))}
+                error={Boolean(editPatientErrors["alamat.kecamatan"])}
                 classNamePrefix="react-select"
                 placeholder="Pilih Kecamatan"
                 isClearable
@@ -1149,7 +1130,7 @@ const PatientConsultationDetail = () => {
               htmlFor="editKelurahan"
               error={editPatientErrors["alamat.kelurahan"]}
             >
-              <Select
+              <SelectInput
                 id="editKelurahan"
                 name="alamat.kelurahan"
                 options={villages}
@@ -1159,7 +1140,7 @@ const PatientConsultationDetail = () => {
                     (opt) => opt.label === editPatientForm.alamat?.kelurahan
                   ) || null
                 }
-                styles={selectStyles(Boolean(editPatientErrors["alamat.kelurahan"]))}
+                error={Boolean(editPatientErrors["alamat.kelurahan"])}
                 classNamePrefix="react-select"
                 placeholder="Pilih Kelurahan/Desa"
                 isClearable
@@ -1178,7 +1159,7 @@ const PatientConsultationDetail = () => {
               htmlFor="editJenisKelamin"
               error={editPatientErrors.jenisKelamin}
             >
-              <Select
+              <SelectInput
                 id="editJenisKelamin"
                 name="jenisKelamin"
                 options={jenisKelaminOptions}
@@ -1188,7 +1169,7 @@ const PatientConsultationDetail = () => {
                     (opt) => opt.value === editPatientForm.jenisKelamin
                   ) || null
                 }
-                styles={selectStyles(Boolean(editPatientErrors.jenisKelamin))}
+                error={Boolean(editPatientErrors.jenisKelamin)}
                 classNamePrefix="react-select"
                 placeholder="Pilih Jenis Kelamin"
                 isClearable
@@ -1303,7 +1284,7 @@ const PatientConsultationDetail = () => {
 
           {/* Petugas yang Mengedit */}
           <Field label="Petugas yang Mengedit:" htmlFor="petugasEditPasien">
-            <Select
+            <SelectInput
               id="petugasEditPasien"
               name="petugasEditPasien"
               options={petugasOptions}
@@ -1315,7 +1296,6 @@ const PatientConsultationDetail = () => {
                   (opt) => opt.value === petugasEditPasien
                 ) || null
               }
-              styles={selectStyles()}
               classNamePrefix="react-select"
               placeholder="Pilih Petugas"
               isClearable

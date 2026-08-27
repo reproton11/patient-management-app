@@ -5,11 +5,7 @@ import api from "../services/api";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { Link } from "react-router-dom";
-import {
-  SearchIcon,
-  CalendarIcon,
-} from "@heroicons/react/outline";
-import Select from "react-select"; // Untuk dropdown filter
+import { SearchIcon, CalendarIcon } from "@heroicons/react/outline";
 import { toast } from "react-toastify";
 import { calculateAge, formatDateSafe } from "../utils/helpers";
 import Card from "../components/ui/Card";
@@ -18,13 +14,16 @@ import Modal from "../components/ui/Modal";
 import Button from "../components/ui/Button";
 import Pagination from "../components/ui/Pagination";
 import DataTable from "../components/ui/DataTable";
+import SelectInput from "../components/ui/SelectInput";
 
 const petugasOptions = [
   { value: "", label: "Semua Petugas" },
-  { value: "Heni", label: "Heni" },
-  { value: "Maria", label: "Maria" },
-  { value: "Emy", label: "Emy" },
-  { value: "Aziz", label: "Aziz" },
+  ...[
+    { value: "Heni", label: "Heni" },
+    { value: "Maria", label: "Maria" },
+    { value: "Emy", label: "Emy" },
+    { value: "Aziz", label: "Aziz" },
+  ].sort((a, b) => a.label.localeCompare(b.label, "id")),
 ];
 
 const jenisKelaminOptions = [
@@ -32,25 +31,6 @@ const jenisKelaminOptions = [
   { value: "Laki-laki", label: "Laki-laki" },
   { value: "Perempuan", label: "Perempuan" },
 ];
-
-const selectStyles = {
-  control: (base) => ({
-    ...base,
-    minHeight: 42,
-    borderRadius: 8,
-    borderColor: "#d1d5db",
-    boxShadow: "none",
-    fontSize: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.75)",
-    "&:hover": { borderColor: "#9ca3af" },
-  }),
-  menu: (base) => ({ ...base, fontSize: 16 }),
-  option: (base, state) => ({
-    ...base,
-    backgroundColor: state.isFocused ? "#eff6ff" : "transparent",
-    color: state.isFocused ? "#1d4ed8" : "#374151",
-  }),
-};
 
 const Consultations = () => {
   const [patients, setPatients] = useState([]);
@@ -203,8 +183,8 @@ const Consultations = () => {
       />
 
       {/* Filter dan Pencarian */}
-      <Card className="flex flex-wrap items-end gap-4 p-5">
-        <div className="min-w-[200px] flex-1">
+      <Card className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 xl:grid-cols-4">
+        <div>
           <label htmlFor="search" className="field-label">
             Cari Pasien
           </label>
@@ -221,7 +201,7 @@ const Consultations = () => {
           </div>
         </div>
 
-        <div className="min-w-[170px] flex-1">
+        <div>
           <label htmlFor="filterDate" className="field-label">
             Tanggal Daftar
           </label>
@@ -237,35 +217,33 @@ const Consultations = () => {
           </div>
         </div>
 
-        <div className="min-w-[170px] flex-1">
+        <div>
           <label htmlFor="filterGender" className="field-label">
             Jenis Kelamin
           </label>
-          <Select
+          <SelectInput
             id="filterGender"
             options={jenisKelaminOptions}
             onChange={handleFilterGenderChange}
             value={jenisKelaminOptions.find((opt) => opt.value === filterGender)}
-            classNamePrefix="react-select"
             placeholder="Pilih Gender"
             isClearable
-            styles={selectStyles}
+            isSearchable={false}
           />
         </div>
 
-        <div className="min-w-[170px] flex-1">
+        <div>
           <label htmlFor="filterPetugas" className="field-label">
             Petugas Daftar
           </label>
-          <Select
+          <SelectInput
             id="filterPetugas"
             options={petugasOptions}
             onChange={handleFilterPetugasChange}
             value={petugasOptions.find((opt) => opt.value === filterPetugas)}
-            classNamePrefix="react-select"
             placeholder="Pilih Petugas"
             isClearable
-            styles={selectStyles}
+            isSearchable={false}
           />
         </div>
       </Card>
