@@ -29,7 +29,6 @@ patient-management-app/
 │   ├── routes/        # /api/auth, /api/pasien, /api/konsultasi, /api/analytics
 │   ├── middlewares/   # auth, error handler, asyncHandler
 │   └── scripts/       # seedAdmin, migrasi, util
-└── AGENTS.md          # Konvensi & panduan untuk AI coding assistant
 ```
 
 ## Menjalankan di Lokal

@@ -20,7 +20,8 @@ node_modules/
 dist/
 build/
 
-# Design docs & review artifacts (lokal saja)
+# Dokumen lokal & review artifacts (jangan ikut commit/push)
+AGENTS.md
 DESIGN.md
 PRODUCT.md
 .impeccable/
