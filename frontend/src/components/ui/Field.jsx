@@ -1,6 +1,4 @@
 // patient-management-app/frontend/src/components/ui/Field.jsx
-import React from "react";
-
 const Field = ({
   label,
   htmlFor,
@@ -33,16 +31,6 @@ export const Input = ({ error = false, className = "", ...props }) => (
     aria-invalid={error || undefined}
     {...props}
   />
-);
-
-export const Select = ({ error = false, className = "", children, ...props }) => (
-  <select
-    className={`input ${error ? "input-error" : ""} ${className}`}
-    aria-invalid={error || undefined}
-    {...props}
-  >
-    {children}
-  </select>
 );
 
 export const Textarea = ({ error = false, className = "", ...props }) => (

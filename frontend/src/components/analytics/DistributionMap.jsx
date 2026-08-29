@@ -1,5 +1,5 @@
 // patient-management-app/frontend/src/components/analytics/DistributionMap.jsx
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { geoMercator, geoPath } from "d3-geo";
 import { formatNumber } from "./chartTheme";
 import {

@@ -1,5 +1,4 @@
 // patient-management-app/frontend/src/components/ui/DataTable.jsx
-import React from "react";
 import { InboxIcon, ChevronUpIcon, ChevronDownIcon } from "@heroicons/react/outline";
 import Card from "./Card";
 import Button from "./Button";

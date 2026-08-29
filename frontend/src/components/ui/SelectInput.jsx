@@ -1,5 +1,4 @@
 // patient-management-app/frontend/src/components/ui/SelectInput.jsx
-import React from "react";
 import Select, { components } from "react-select";
 import { ChevronDownIcon } from "@heroicons/react/outline";
 

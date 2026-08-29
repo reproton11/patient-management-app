@@ -1,19 +1,14 @@
 // patient-management-app/frontend/src/components/ui/Button.jsx
-import React from "react";
-
 const variantClass = {
   primary: "btn-primary",
   secondary: "btn-secondary",
   danger: "btn-danger",
   success: "btn-success",
-  warning: "btn-warning",
-  ghost: "btn-ghost",
 };
 
 const sizeClass = {
   sm: "px-3 py-1.5 text-xs",
   md: "px-4 py-2 text-sm",
-  lg: "px-5 py-2.5 text-sm",
 };
 
 const Button = ({

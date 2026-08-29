@@ -1,6 +1,4 @@
 // patient-management-app/frontend/src/components/ui/Badge.jsx
-import React from "react";
-
 const toneClass = {
   blue: "bg-primary-50 text-primary-700 ring-1 ring-inset ring-primary-600/20",
   gray: "bg-gray-100 text-gray-700 ring-1 ring-inset ring-gray-600/10",

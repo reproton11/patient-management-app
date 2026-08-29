@@ -2,7 +2,7 @@ const SkeletonBlock = ({ className = "" }) => (
   <div className={`animate-pulse rounded-lg bg-gray-200 ${className}`} />
 );
 
-export const StatCardSkeleton = () => (
+const StatCardSkeleton = () => (
   <div className="card p-6">
     <SkeletonBlock className="h-11 w-11 rounded-lg" />
     <SkeletonBlock className="mt-4 h-3 w-32" />
@@ -11,7 +11,7 @@ export const StatCardSkeleton = () => (
   </div>
 );
 
-export const ChartCardSkeleton = ({ height = 300 }) => (
+const ChartCardSkeleton = ({ height = 300 }) => (
   <div className="card p-6">
     <SkeletonBlock className="mb-4 h-5 w-56 border-b border-gray-100 pb-3" />
     <div

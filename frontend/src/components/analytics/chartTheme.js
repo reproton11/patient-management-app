@@ -11,8 +11,6 @@ export const CHART_COLORS = [
   "#6366F1",
 ];
 
-export const PRIMARY_COLOR = "#0891B2";
-
 export const AXIS_TICK = { fill: "#64748B", fontSize: 13 };
 
 export const GRID_COLOR = "#F1F5F9";

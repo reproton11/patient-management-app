@@ -1,6 +1,6 @@
 ﻿// patient-management-app/frontend/src/pages/PatientConsultationDetail.jsx
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import api from "../services/api";
 import { format } from "date-fns";
@@ -45,7 +45,6 @@ const buildSoapSnapshot = (soapForm, therapy) =>
 
 const PatientConsultationDetail = () => {
   const { patientId } = useParams();
-  const navigate = useNavigate();
 
   const [patient, setPatient] = useState(null);
   const [printConsultations, setPrintConsultations] = useState([]);
@@ -380,7 +379,6 @@ const PatientConsultationDetail = () => {
     patientId,
     currentPage,
     isNewConsultation,
-    navigate,
     fillFormWithConsultationData,
     resetFormForNewConsultation,
   ]);

@@ -1,5 +1,5 @@
 // patient-management-app/frontend/src/pages/Dashboard.jsx
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import api from "../services/api";
 import { format } from "date-fns";

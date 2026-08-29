@@ -1,5 +1,5 @@
 // patient-management-app/frontend/src/components/ui/Modal.jsx
-import React, { Fragment } from "react";
+import { Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 
 const Modal = ({ open, onClose, title, description, children, maxWidth = "md" }) => {

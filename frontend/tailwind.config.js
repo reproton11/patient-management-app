@@ -26,7 +26,6 @@ export default {
           900: "#164e63",
           950: "#083344",
         },
-        surface: "#ffffff",
         canvas: "#f8fafb",
       },
       boxShadow: {

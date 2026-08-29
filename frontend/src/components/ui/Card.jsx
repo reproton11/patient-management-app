@@ -1,6 +1,4 @@
 // patient-management-app/frontend/src/components/ui/Card.jsx
-import React from "react";
-
 const Card = ({ className = "", hover = false, children, ...props }) => (
   <div className={`card ${hover ? "card-hover" : ""} ${className}`} {...props}>
     {children}

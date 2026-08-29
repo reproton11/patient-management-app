@@ -11,19 +11,14 @@ const useIndonesiaRegions = () => {
   const [districts, setDistricts] = useState([]);
   const [villages, setVillages] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   const fetchData = useCallback(async (url) => {
     setLoading(true);
-    setError(null);
     try {
       const response = await axios.get(url);
       return response.data;
     } catch (err) {
       console.error("Gagal mengambil data wilayah:", err);
-      setError(
-        "Gagal memuat data wilayah. Coba periksa koneksi internet Anda."
-      );
       toast.error("Gagal memuat data wilayah.");
       return null;
     } finally {
@@ -123,8 +118,6 @@ const useIndonesiaRegions = () => {
     districts,
     villages,
     loading,
-    error,
-    fetchProvinces,
     fetchRegencies,
     fetchDistricts,
     fetchVillages,
