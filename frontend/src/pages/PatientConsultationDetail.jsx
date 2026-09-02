@@ -24,6 +24,7 @@ import Button from "../components/ui/Button";
 import Field, { Input, Textarea } from "../components/ui/Field";
 import Pagination from "../components/ui/Pagination";
 import SelectInput from "../components/ui/SelectInput";
+import DatePicker from "../components/ui/DatePicker";
 
 const AUTOSAVE_DELAY_MS = 3000;
 
@@ -32,6 +33,7 @@ const petugasOptions = [
   { value: "Maria", label: "Maria" },
   { value: "Emy", label: "Emy" },
   { value: "Aziz", label: "Aziz" },
+  { value: "Rani", label: "Rani" },
 ].sort((a, b) => a.label.localeCompare(b.label, "id"));
 
 const jenisKelaminOptions = [
@@ -1179,14 +1181,16 @@ const PatientConsultationDetail = () => {
               htmlFor="editTanggalLahir"
               error={editPatientErrors.tanggalLahir}
             >
-              <Input
-                type="date"
+              <DatePicker
                 id="editTanggalLahir"
-                name="tanggalLahir"
                 value={editPatientForm.tanggalLahir || ""}
-                onChange={handleEditPatientChange}
+                onChange={(tanggal) =>
+                  handleEditPatientChange({
+                    target: { name: "tanggalLahir", value: tanggal },
+                  })
+                }
                 error={Boolean(editPatientErrors.tanggalLahir)}
-                required
+                maxDate={new Date()}
               />
             </Field>
           </div>

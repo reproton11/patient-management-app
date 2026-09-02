@@ -5,7 +5,7 @@ import api from "../services/api";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { Link } from "react-router-dom";
-import { SearchIcon, CalendarIcon } from "@heroicons/react/outline";
+import { SearchIcon } from "@heroicons/react/outline";
 import { toast } from "react-toastify";
 import { calculateAge, formatDateSafe } from "../utils/helpers";
 import Card from "../components/ui/Card";
@@ -15,6 +15,7 @@ import Button from "../components/ui/Button";
 import Pagination from "../components/ui/Pagination";
 import DataTable from "../components/ui/DataTable";
 import SelectInput from "../components/ui/SelectInput";
+import DatePicker from "../components/ui/DatePicker";
 
 const petugasOptions = [
   { value: "", label: "Semua Petugas" },
@@ -23,6 +24,7 @@ const petugasOptions = [
     { value: "Maria", label: "Maria" },
     { value: "Emy", label: "Emy" },
     { value: "Aziz", label: "Aziz" },
+    { value: "Rani", label: "Rani" },
   ].sort((a, b) => a.label.localeCompare(b.label, "id")),
 ];
 
@@ -205,16 +207,16 @@ const Consultations = () => {
           <label htmlFor="filterDate" className="field-label">
             Tanggal Daftar
           </label>
-          <div className="relative">
-            <CalendarIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" aria-hidden="true" />
-            <input
-              type="date"
-              id="filterDate"
-              value={filterDate}
-              onChange={handleFilterDateChange}
-              className="input pl-10"
-            />
-          </div>
+          <DatePicker
+            id="filterDate"
+            value={filterDate}
+            onChange={(tanggal) =>
+              handleFilterDateChange({ target: { value: tanggal } })
+            }
+            placeholder="Semua Tanggal"
+            minDate={new Date(2020, 0, 1)}
+            maxDate={new Date()}
+          />
         </div>
 
         <div>

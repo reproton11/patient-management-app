@@ -10,12 +10,14 @@ import PageHeader from "../components/ui/PageHeader";
 import Button from "../components/ui/Button";
 import Field, { Input } from "../components/ui/Field";
 import SelectInput from "../components/ui/SelectInput";
+import DatePicker from "../components/ui/DatePicker";
 
 const petugasOptions = [
   { value: "Heni", label: "Heni" },
   { value: "Maria", label: "Maria" },
   { value: "Emy", label: "Emy" },
   { value: "Aziz", label: "Aziz" },
+  { value: "Rani", label: "Rani" },
 ].sort((a, b) => a.label.localeCompare(b.label, "id"));
 
 const jenisKelaminOptions = [
@@ -348,14 +350,16 @@ const RegisterPatient = () => {
                 required
                 error={errors.tanggalLahir}
               >
-                <Input
-                  type="date"
+                <DatePicker
                   id="tanggalLahir"
-                  name="tanggalLahir"
                   value={formData.tanggalLahir}
-                  onChange={handleChange}
+                  onChange={(tanggal) =>
+                    handleChange({
+                      target: { name: "tanggalLahir", value: tanggal },
+                    })
+                  }
                   error={Boolean(errors.tanggalLahir)}
-                  required
+                  maxDate={new Date()}
                 />
               </Field>
             </div>

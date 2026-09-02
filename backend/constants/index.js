@@ -1,7 +1,7 @@
 // patient-management-app/backend/constants/index.js
 
 // Daftar petugas yang valid untuk pendaftaran dan konsultasi
-const VALID_PETUGAS = ["Heni", "Maria", "Emy", "Aziz"];
+const VALID_PETUGAS = ["Heni", "Maria", "Emy", "Aziz", "Rani"];
 
 // Konfigurasi angka awal untuk generate nomor kartu berdasarkan huruf awal
 const START_ANGKA_MAP = {
