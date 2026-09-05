@@ -1,6 +1,7 @@
 ﻿// patient-management-app/frontend/src/pages/PatientConsultationDetail.jsx
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
+import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import api from "../services/api";
 import { format } from "date-fns";
@@ -12,7 +13,7 @@ import {
   PencilIcon,
 } from "@heroicons/react/outline";
 
-// jspdf & html2canvas di-import dinamis saat tombol cetak diklik (code splitting)
+// Cetak memakai window.print() + CSS @media print (PDF berbasis teks, bukan gambar)
 
 import PatientMedicalRecordTemplate from "../components/PatientMedicalRecordTemplate";
 import useIndonesiaRegions from "../hooks/useIndonesiaRegions";
@@ -100,11 +101,8 @@ const PatientConsultationDetail = () => {
   const [totalPages, setTotalPages] = useState(1);
   const ITEMS_PER_PAGE = 20;
 
-  // Ref untuk PDF export
-  const componentRef = useRef();
-
-  // state untuk print layout
-  const [isPrintLayoutVisible, setIsPrintLayoutVisible] = useState(false);
+  // state untuk proses cetak
+  const [isPrinting, setIsPrinting] = useState(false);
 
   // === Auto-save SOAP (debounce 3 detik setelah berhenti mengetik) ===
   const soapBaselineRef = useRef("");
@@ -227,14 +225,14 @@ const PatientConsultationDetail = () => {
     setAutoSaveStatus("idle");
   }, []);
 
-  // === Mulai handleGeneratePdf (jspdf & html2canvas dimuat on-demand) ===
-  const handleGeneratePdf = useCallback(async () => {
+  // === Mulai handlePrint (window.print() + CSS @media print) ===
+  const handlePrint = useCallback(async () => {
     if (!patient) {
       toast.error("Data pasien belum lengkap untuk dicetak.");
       return;
     }
 
-    setLoading(true);
+    setIsPrinting(true);
     try {
       // Ambil seluruh riwayat konsultasi hanya saat cetak
       let consultations = [];
@@ -246,71 +244,25 @@ const PatientConsultationDetail = () => {
       } catch (err) {
         if (err.response?.status !== 404) throw err;
       }
-      setPrintConsultations(consultations);
-    } catch (err) {
-      console.error("Error fetching consultations for print:", err);
-      toast.error("Gagal memuat riwayat konsultasi untuk cetak.");
-      setLoading(false);
-      return;
-    }
 
-    setIsPrintLayoutVisible(true); // Render komponen cetak agar bisa ditangkap html2canvas
-
-    // Beri waktu React untuk merender komponen ke DOM
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    try {
-      if (!componentRef.current) {
-        console.error("componentRef.current is null when generating PDF.");
-        toast.error(
-          "Gagal membuat PDF: Komponen cetak tidak ditemukan. Coba lagi."
-        );
+      if (consultations.length === 0) {
+        toast.error("Tidak ada riwayat konsultasi untuk dicetak.");
         return;
       }
 
-      const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
-        import("jspdf"),
-        import("html2canvas"),
-      ]);
+      setPrintConsultations(consultations);
 
-      const element = componentRef.current;
-      const canvas = await html2canvas(element, {
-        scale: 2, // Peningkatan resolusi untuk kualitas PDF yang lebih baik
-        useCORS: true, // Penting jika ada gambar dari domain lain (misal logo)
-        logging: false,
-      });
-
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4"); // 'p' for portrait, 'mm' for units, 'a4' for size
-      const imgWidth = 210; // A4 width in mm
-      const pageHeight = 297; // A4 height in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-
-      pdf.save(
-        `Rekam_Medis_${patient.noKartu}_${format(new Date(), "dd-MM-yyyy")}.pdf`
-      );
-      toast.success("Rekam medis berhasil diekspor ke PDF!");
+      // Beri waktu React merender template ke DOM sebelum dialog cetak dibuka
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      window.print();
     } catch (err) {
-      console.error("Error generating PDF:", err);
-      toast.error("Terjadi kesalahan saat membuat PDF. Coba lagi.");
+      console.error("Error preparing print:", err);
+      toast.error("Gagal menyiapkan data untuk dicetak.");
     } finally {
-      setLoading(false);
-      setIsPrintLayoutVisible(false); // Sembunyikan kembali komponen cetak
+      setIsPrinting(false);
     }
   }, [patient, patientId]);
-  // === Akhir handleGeneratePdf ===
+  // === Akhir handlePrint ===
 
   const fetchPatientData = useCallback(async () => {
     try {
@@ -685,7 +637,7 @@ const PatientConsultationDetail = () => {
       />
 
       {/* Patient Info Card */}
-      <Card className="p-6 no-print">
+      <Card className="p-6">
         <Card.Header
           title="Detail Pasien"
           action={
@@ -702,8 +654,8 @@ const PatientConsultationDetail = () => {
                 variant="primary"
                 size="sm"
                 icon={PrinterIcon}
-                onClick={handleGeneratePdf}
-                disabled={!patient || loading || totalKonsultasi === 0}
+                onClick={handlePrint}
+                disabled={!patient || isPrinting || totalKonsultasi === 0}
               >
                 Cetak Rekam Medis
               </Button>
@@ -757,7 +709,7 @@ const PatientConsultationDetail = () => {
 
       {/* Consultations History */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <Card className="h-fit p-6 no-print lg:sticky lg:top-8 lg:self-start">
+        <Card className="h-fit p-6 lg:sticky lg:top-8 lg:self-start">
           <Card.Header
             title="Riwayat Konsultasi"
             action={
@@ -817,7 +769,7 @@ const PatientConsultationDetail = () => {
         </Card>
 
         {/* SOAP Form */}
-        <Card className="h-fit p-6 no-print lg:col-span-2">
+        <Card className="h-fit p-6 lg:col-span-2">
           <div className="mb-4 flex flex-col gap-2 border-b border-gray-100 pb-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-base font-semibold text-gray-900">
               {isNewConsultation
@@ -1323,30 +1275,17 @@ const PatientConsultationDetail = () => {
         </form>
       </Modal>
 
-      {/* Komponen Cetak: Dirender secara kondisional */}
-      {patient && (
-        <div
-          className="print-area-wrapper"
-          style={{
-            position: "absolute",
-            left: "-9999px",
-            top: "-9999px",
-            width: "0px",
-            height: "0px",
-            overflow: "hidden",
-            opacity: 0,
-            pointerEvents: "none",
-            zIndex: -1,
-            display: isPrintLayoutVisible ? "block" : "none",
-          }}
-        >
-          <PatientMedicalRecordTemplate
-            ref={componentRef}
-            patient={patient}
-            consultations={printConsultations}
-          />
-        </div>
-      )}
+      {/* Komponen Cetak: dirender via portal ke <body>, hanya tampil saat print (CSS) */}
+      {patient &&
+        createPortal(
+          <div className="print-area-wrapper">
+            <PatientMedicalRecordTemplate
+              patient={patient}
+              consultations={printConsultations}
+            />
+          </div>,
+          document.body
+        )}
     </motion.div>
   );
 };

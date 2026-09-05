@@ -6,28 +6,24 @@ import { id } from "date-fns/locale";
 // Fungsi calculateAge dari utils bersama
 import { calculateAge } from "../utils/helpers";
 
-const PatientMedicalRecordTemplate = React.forwardRef(
-  ({ patient, consultations }, ref) => {
-    if (!patient) {
-      return null;
-    }
+const PatientMedicalRecordTemplate = ({ patient, consultations }) => {
+  if (!patient) {
+    return null;
+  }
 
-    return (
-      <div
-        ref={ref}
-        className="p-8 bg-white text-gray-800 print-content-area"
-        style={{
-          fontFamily: "var(--Google Sans, sans-serif)",
-          lineHeight: 1.6,
-          fontSize: "12px",
-          width: "210mm",
-          minHeight: "297mm",
-          margin: "auto",
-          boxSizing: "border-box",
-        }}
-      >
-        {/* Semua style inline di bawah ini sudah diperbaiki */}
-
+  return (
+    <div
+      className="p-8 bg-white text-gray-800"
+      style={{
+        fontFamily: "Figtree, sans-serif",
+        lineHeight: 1.6,
+        fontSize: "12px",
+        width: "210mm",
+        minHeight: "297mm",
+        margin: "auto",
+        boxSizing: "border-box",
+      }}
+    >
         <div
           className="header"
           style={{
@@ -44,8 +40,7 @@ const PatientMedicalRecordTemplate = React.forwardRef(
               src="/clinic-logo.png"
               alt="Klinik Logo"
               onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = "https://via.placeholder.com/40x40?text=CL";
+                e.target.style.display = "none";
               }}
               style={{ height: "40px", marginRight: "10px" }}
             />
@@ -289,7 +284,6 @@ const PatientMedicalRecordTemplate = React.forwardRef(
 
         {consultations && consultations.length > 0 && (
           <>
-            <div style={{ pageBreakBefore: "always" }}></div>{" "}
             <div
               className="section-title"
               style={{
@@ -449,8 +443,7 @@ const PatientMedicalRecordTemplate = React.forwardRef(
           {format(new Date(), "dd MMMM yyyy, HH:mm:ss", { locale: id })}.
         </div>
       </div>
-    );
-  }
-);
+  );
+};
 
 export default PatientMedicalRecordTemplate;

@@ -190,39 +190,25 @@ body .Toastify__toast--warning .Toastify__progress-bar {
   background: #d97706;
 }
 
-/* Global Print Styles (ini tetap berlaku untuk browser print) */
+/* === Cetak / PDF Rekam Medis === */
+/* Template cetak dirender via portal ke <body>, tersembunyi di layar
+   dan hanya tampil saat print (hasil PDF berbasis teks, bukan gambar). */
+.print-area-wrapper {
+  display: none;
+}
+
 @media print {
-  .no-print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  /* Sembunyikan seluruh aplikasi, tampilkan hanya template cetak */
+  #root {
     display: none !important;
   }
-  aside {
-    display: none !important;
-  }
-  /* Netralkan efek kaca saat cetak agar hasil cetak solid & terbaca */
-  .aurora-bg {
-    display: none !important;
-  }
-  .card,
-  [class*="backdrop-blur"] {
-    background-color: #ffffff !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-  main {
-    margin-left: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-  }
-  /* Pastikan area cetak tidak disembunyikan saat print */
+
   .print-area-wrapper {
     display: block !important;
-    position: relative !important; /* Agar diatur ulang untuk print */
-    left: 0 !important;
-    top: 0 !important;
-    width: 100% !important;
-    height: auto !important;
-    overflow: visible !important;
-    opacity: 1 !important;
-    z-index: auto !important;
   }
 }
