@@ -2,10 +2,18 @@ const Pasien = require("../models/Pasien");
 const Konsultasi = require("../models/Konsultasi");
 const asyncHandler = require("../middlewares/asyncHandler");
 
+// Cache in-memory TTL pendek: summary mahal (15 query paralel), data klinik toleran basi 60 dtk
+let summaryCache = { data: null, expires: 0 };
+const SUMMARY_TTL_MS = 60 * 1000;
+
 // @route   GET api/analytics/summary
 // @desc    Dapatkan ringkasan analytics
 // @access  Private
 exports.getAnalyticsSummary = asyncHandler(async (req, res) => {
+  if (summaryCache.data && Date.now() < summaryCache.expires) {
+    res.set("Cache-Control", "private, max-age=60");
+    return res.json(summaryCache.data);
+  }
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -62,7 +70,7 @@ exports.getAnalyticsSummary = asyncHandler(async (req, res) => {
     topDiagnoses,
     vitalStatsAgg,
     consultationCountsAgg,
-    totalUniquePatientsArr,
+    uniquePatientsAgg,
   ] = await Promise.all([
     Pasien.countDocuments(),
     Pasien.countDocuments({ tanggalDaftar: { $gte: startOfMonth } }),
@@ -168,7 +176,10 @@ exports.getAnalyticsSummary = asyncHandler(async (req, res) => {
         },
       },
     ]),
-    Konsultasi.distinct("pasienId"),
+    Konsultasi.aggregate([
+      { $group: { _id: "$pasienId" } },
+      { $count: "total" },
+    ]),
   ]);
 
   const momGrowth =
@@ -180,14 +191,14 @@ exports.getAnalyticsSummary = asyncHandler(async (req, res) => {
       ? ((pasienTahunIni - pasienTahunLalu) / pasienTahunLalu * 100).toFixed(2)
       : 0;
 
-  const totalUniquePatients = totalUniquePatientsArr.length;
+  const totalUniquePatients = uniquePatientsAgg[0]?.total || 0;
   const retainedPatients = consultationCountsAgg[0]?.totalRetainedPatients || 0;
   const retentionRate =
     totalUniquePatients > 0
       ? ((retainedPatients / totalUniquePatients) * 100).toFixed(2)
       : 0;
 
-  res.json({
+  const payload = {
     totalPasien,
     growth: {
       mom: parseFloat(momGrowth),
@@ -219,5 +230,8 @@ exports.getAnalyticsSummary = asyncHandler(async (req, res) => {
         consultationCountsAgg[0]?.avgConsultationsPerPatient?.toFixed(2) || 0,
       totalUniquePatients,
     },
-  });
+  };
+  summaryCache = { data: payload, expires: Date.now() + SUMMARY_TTL_MS };
+  res.set("Cache-Control", "private, max-age=60");
+  res.json(payload);
 });

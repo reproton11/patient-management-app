@@ -63,7 +63,7 @@ const Consultations = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const fetchPatients = async (page = 1) => {
+  const fetchPatients = async (page = 1, signal) => {
     setLoading(true);
     setError(null);
     try {
@@ -78,22 +78,26 @@ const Consultations = () => {
       if (filterGender) params.jenisKelamin = filterGender;
       if (filterPetugas) params.petugasPendaftaran = filterPetugas;
 
-      const res = await api.get("/pasien", { params });
+      const res = await api.get("/pasien", { params, signal });
       setPatients(res.data.pasien || []);
       setTotalPages(res.data.totalPages);
       setCurrentPage(res.data.currentPage);
     } catch (err) {
+      if (err?.code === "ERR_CANCELED" || err?.name === "CanceledError") return;
       console.error("Error fetching patients:", err);
       setError("Gagal memuat data pasien. Silakan coba lagi.");
       toast.error("Gagal memuat data pasien.");
       setPatients([]);
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchPatients();
+    const controller = new AbortController();
+    fetchPatients(1, controller.signal);
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearchTerm, filterDate, filterGender, filterPetugas, sortBy, sortOrder]); // Refetch saat filter berubah
 
   const handleSort = (column) => {

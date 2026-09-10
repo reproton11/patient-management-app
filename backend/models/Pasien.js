@@ -79,6 +79,12 @@ const pasienSchema = new Schema(
 
 pasienSchema.index({ tanggalDaftar: -1 });
 pasienSchema.index({ nama: 1 });
+// Filter + agregasi analytics: hindari COLLSCAN pada koleksi besar
+pasienSchema.index({ "alamat.provinsi": 1 });
+pasienSchema.index({ "alamat.kabupaten": 1 });
+pasienSchema.index({ jenisKelamin: 1 });
+pasienSchema.index({ tanggalLahir: 1 });
+pasienSchema.index({ "logAktivitas.pada": -1 });
 
 // Middleware untuk update terakhirDiUpdate
 pasienSchema.pre("findOneAndUpdate", function (next) {

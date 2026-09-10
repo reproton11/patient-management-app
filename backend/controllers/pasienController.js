@@ -270,7 +270,7 @@ exports.getSemuaPasien = asyncHandler(async (req, res) => {
   const order = req.query.sortOrder === "asc" ? 1 : -1;
   const sort = { [sortBy]: order };
 
-  const result = await Pasien.paginate(query, { page, limit, sort });
+  const result = await Pasien.paginate(query, { page, limit, sort, lean: true });
 
   res.json({
     pasien: result.docs,
@@ -284,7 +284,7 @@ exports.getSemuaPasien = asyncHandler(async (req, res) => {
 // @desc    Dapatkan detail pasien berdasarkan ID
 // @access  Private
 exports.getPasienById = asyncHandler(async (req, res) => {
-  const pasien = await Pasien.findById(req.params.id);
+  const pasien = await Pasien.findById(req.params.id).lean();
   if (!pasien) {
     return res.status(404).json({ message: "Pasien tidak ditemukan" });
   }
@@ -379,10 +379,18 @@ exports.deletePasien = asyncHandler(async (req, res) => {
   res.json({ message: "Pasien berhasil dihapus" });
 });
 
+// Cache in-memory TTL pendek untuk dashboard (unwind logAktivitas mahal)
+let dashboardCache = { data: null, expires: 0 };
+const DASHBOARD_TTL_MS = 30 * 1000;
+
 // @route   GET api/pasien/stats
 // @desc    Statistik ringkas untuk dashboard (hari/minggu/bulan ini + log aktivitas terbaru)
 // @access  Private
 exports.getDashboardStats = asyncHandler(async (req, res) => {
+  if (dashboardCache.data && Date.now() < dashboardCache.expires) {
+    res.set("Cache-Control", "private, max-age=30");
+    return res.json(dashboardCache.data);
+  }
   const now = new Date();
   const startOfToday = new Date(now);
   startOfToday.setHours(0, 0, 0, 0);
@@ -420,11 +428,14 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
     },
   ]);
 
-  res.json({
+  res.set("Cache-Control", "private, max-age=30");
+  const payload = {
     stats: { today, week, month, total },
     recentPatients: todayPatients,
     recentActivity,
-  });
+  };
+  dashboardCache = { data: payload, expires: Date.now() + DASHBOARD_TTL_MS };
+  res.json(payload);
 });
 
 // @route   GET api/pasien/:id/riwayat-kunjungan

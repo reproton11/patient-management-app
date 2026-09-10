@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   AreaChart,
@@ -189,6 +189,18 @@ const Analytics = () => {
     }
   };
 
+  // Memo harus di atas early-return (rules of hooks): dependensi analytics yang stabil
+  const ageData = useMemo(
+    () => sortAgeDistribution(analytics?.demographics?.age ?? []),
+    [analytics]
+  );
+  const genderTotal = useMemo(() => {
+    const list = analytics?.demographics?.gender ?? [];
+    return Array.isArray(list)
+      ? list.reduce((sum, entry) => sum + entry.count, 0)
+      : 0;
+  }, [analytics]);
+
   if (loading && !analytics) {
     return <AnalyticsSkeleton />;
   }
@@ -215,16 +227,14 @@ const Analytics = () => {
     );
   }
 
-  const growth = analytics.growth ?? {};
-  const dailyData = analytics.dailyRegistrations ?? [];
-  const genderData = analytics.demographics?.gender ?? [];
-  const ageData = sortAgeDistribution(analytics.demographics?.age ?? []);
-  const provinceData = analytics.demographics?.province ?? [];
-  const regencyByProvince = analytics.demographics?.regencyByProvince ?? [];
-  const topDiagnoses = analytics.topDiagnoses ?? [];
-  const vitalStats = analytics.vitalStats ?? {};
-  const retention = analytics.retention ?? {};
-  const genderTotal = genderData.reduce((sum, entry) => sum + entry.count, 0);
+  const growth = analytics?.growth ?? {};
+  const dailyData = analytics?.dailyRegistrations ?? [];
+  const genderData = analytics?.demographics?.gender ?? [];
+  const provinceData = analytics?.demographics?.province ?? [];
+  const regencyByProvince = analytics?.demographics?.regencyByProvince ?? [];
+  const topDiagnoses = analytics?.topDiagnoses ?? [];
+  const vitalStats = analytics?.vitalStats ?? {};
+  const retention = analytics?.retention ?? {};
 
   return (
     <motion.div

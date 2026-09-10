@@ -50,4 +50,6 @@ const konsultasiSchema = new Schema(
 
 konsultasiSchema.plugin(mongoosePaginate);
 konsultasiSchema.index({ pasienId: 1, tanggalKonsultasi: -1 });
+// Top diagnosis: $match + $group pada soap.A tanpa indeks = COLLSCAN
+konsultasiSchema.index({ "soap.A": 1 });
 module.exports = mongoose.model("Konsultasi", konsultasiSchema);

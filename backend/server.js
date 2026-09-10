@@ -1,6 +1,7 @@
 require("dotenv").config();
 
 const express = require("express");
+const compression = require("compression");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -27,6 +28,7 @@ const corsOptions = {
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
 };
 
+app.use(compression({ threshold: 1024 }));
 app.use(helmet());
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "1mb" }));

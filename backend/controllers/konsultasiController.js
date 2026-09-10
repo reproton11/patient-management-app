@@ -109,10 +109,9 @@ exports.createKonsultasi = asyncHandler(async (req, res) => {
 // @desc    Dapatkan detail konsultasi
 // @access  Private
 exports.getKonsultasiById = asyncHandler(async (req, res) => {
-  const konsultasi = await Konsultasi.findById(req.params.id).populate(
-    "pasienId",
-    "nama noKartu"
-  );
+  const konsultasi = await Konsultasi.findById(req.params.id)
+    .populate("pasienId", "nama noKartu")
+    .lean();
   if (!konsultasi) {
     return res.status(404).json({ message: "Konsultasi tidak ditemukan" });
   }
@@ -129,7 +128,7 @@ exports.getKonsultasiByPasienId = asyncHandler(async (req, res) => {
 
   const result = await Konsultasi.paginate(
     { pasienId: req.params.pasienId },
-    { page, limit, sort: { tanggalKonsultasi: -1 } }
+    { page, limit, sort: { tanggalKonsultasi: -1 }, lean: true }
   );
 
   if (result.docs.length === 0) {
