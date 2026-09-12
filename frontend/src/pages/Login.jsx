@@ -1,18 +1,30 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
-import { LockClosedIcon, UserIcon } from "@heroicons/react/outline";
+import {
+  LockClosedIcon,
+  UserIcon,
+  ExclamationIcon,
+  XIcon,
+} from "@heroicons/react/outline";
 import api from "../services/api";
-import { saveSession } from "../services/auth";
+import { saveSession, consumeSessionExpired } from "../services/auth";
 import { toast } from "react-toastify";
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || "/";
+
+  useEffect(() => {
+    if (consumeSessionExpired()) {
+      setSessionExpired(true);
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -57,6 +69,32 @@ const Login = () => {
             Sistem Manajemen Pasien — silakan masuk untuk melanjutkan
           </p>
         </div>
+
+        {sessionExpired && (
+          <div
+            role="alert"
+            className="mb-6 flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3.5 text-amber-900"
+          >
+            <ExclamationIcon
+              className="mt-0.5 h-5 w-5 shrink-0 text-amber-600"
+              aria-hidden="true"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold">Sesi Anda telah habis</p>
+              <p className="mt-0.5 text-sm text-amber-800">
+                Silakan masuk kembali untuk melanjutkan.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSessionExpired(false)}
+              aria-label="Tutup pemberitahuan"
+              className="rounded-lg p-1 text-amber-700 transition-colors hover:bg-amber-500/20 hover:text-amber-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2"
+            >
+              <XIcon className="h-4 w-4" />
+            </button>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>

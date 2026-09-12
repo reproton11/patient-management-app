@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getToken, clearSession } from "./auth";
+import { getToken, clearSession, markSessionExpired } from "./auth";
 
 // Fallback ke "/api" agar lewat proxy Vite saat .env tidak tersedia (development lokal)
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
@@ -26,6 +26,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !isLoginRequest) {
       clearSession();
       if (window.location.pathname !== "/login") {
+        markSessionExpired();
         window.location.href = "/login";
       }
     }
