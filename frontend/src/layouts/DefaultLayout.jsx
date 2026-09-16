@@ -11,6 +11,7 @@ import {
   XIcon,
 } from "@heroicons/react/outline";
 import { getUser, clearSession } from "../services/auth";
+import AnimatedLogo from "../components/AnimatedLogo";
 
 const navGroups = [
   {
@@ -75,15 +76,7 @@ const DefaultLayout = () => {
           <MenuIcon className="h-6 w-6" />
         </button>
         <div className="flex items-center">
-          <img
-            src="/clinic-logo.png"
-            alt="Klinik Logo"
-            className="h-7 mr-2"
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.style.display = "none";
-            }}
-          />
+          <AnimatedLogo className="h-7 mr-2" alt="Klinik Logo" />
           <span className="text-base font-bold text-gray-900">Klinik AZ</span>
         </div>
         <div className="w-10" aria-hidden="true" />
@@ -106,15 +99,7 @@ const DefaultLayout = () => {
       >
         <div className="flex items-center justify-between pr-1">
           <div className="flex items-center min-w-0">
-            <img
-              src="/clinic-logo.png"
-              alt="Klinik Logo"
-              className="h-10 mr-3 shrink-0"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = "https://via.placeholder.com/40x40?text=CL";
-              }}
-            />
+            <AnimatedLogo className="h-10 mr-3 shrink-0" alt="Klinik Logo" />
             <div className="min-w-0">
               <h1 className="text-lg font-bold leading-tight text-gray-900">
                 Klinik AZ

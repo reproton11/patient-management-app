@@ -10,6 +10,7 @@ import {
 import api from "../services/api";
 import { saveSession, consumeSessionExpired } from "../services/auth";
 import { toast } from "react-toastify";
+import AnimatedLogo from "../components/AnimatedLogo";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -53,15 +54,7 @@ const Login = () => {
         className="card w-full max-w-md p-8"
       >
         <div className="mb-8 flex flex-col items-center text-center">
-          <img
-            src="/clinic-logo.png"
-            alt="Logo Klinik AZ"
-            className="mb-3 h-14"
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.style.display = "none";
-            }}
-          />
+          <AnimatedLogo className="mb-3 h-14" alt="Logo Klinik AZ" />
           <h1 className="text-2xl font-bold tracking-tight text-gray-900">
             Klinik AZ
           </h1>
