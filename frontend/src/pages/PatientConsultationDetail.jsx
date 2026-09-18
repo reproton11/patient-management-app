@@ -26,6 +26,7 @@ import Field, { Input, Textarea } from "../components/ui/Field";
 import Pagination from "../components/ui/Pagination";
 import SelectInput from "../components/ui/SelectInput";
 import DatePicker from "../components/ui/DatePicker";
+import Icd10CodeInput from "../components/diagnosis/Icd10CodeInput";
 
 const AUTOSAVE_DELAY_MS = 3000;
 
@@ -434,6 +435,21 @@ const PatientConsultationDetail = () => {
       setSoapForm((prev) => ({ ...prev, [name]: value }));
     }
     setFormErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
+  // Deskripsi kode ditulis ke SOAP.A supaya ikut auto-save dan tercetak
+  const handleAppendDiagnosa = (kode, nama) => {
+    if (soapForm.A.includes(`${kode} -`)) {
+      toast.info(`${kode} sudah ada di Assessment.`);
+      return;
+    }
+    setSoapForm((prev) => ({
+      ...prev,
+      A: prev.A
+        ? `${prev.A.trimEnd()}\n${kode} - ${nama}`
+        : `${kode} - ${nama}`,
+    }));
+    setFormErrors((prev) => ({ ...prev, A: "" }));
   };
 
   const handleSaveConsultation = async () => {
@@ -882,6 +898,9 @@ const PatientConsultationDetail = () => {
                 </Field>
               </div>
             </div>
+
+            {/* Input kode ICD-10, deskripsi otomatis masuk ke SOAP.A */}
+            <Icd10CodeInput onAppend={handleAppendDiagnosa} />
 
             {/* Assessment */}
             <Field label="A (Assessment - Diagnosis Dokter)" htmlFor="A" error={formErrors.A}>

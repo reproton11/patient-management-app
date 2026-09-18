@@ -54,6 +54,18 @@ const loginLimiter = rateLimit({
   },
 });
 
+// Pencarian ICD-10 dipanggil tiap ketikan dan satu IP klinik bisa dipakai
+// bersama (NAT), jadi batasnya lebih longgar dari apiLimiter.
+const searchLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 3000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    message: "Terlalu banyak permintaan pencarian. Coba lagi nanti.",
+  },
+});
+
 mongoose
   .connect(MONGO_URI)
   .then(() => console.log("MongoDB Connected successfully!"))
@@ -65,6 +77,7 @@ const pasienRoutes = require("./routes/pasienRoutes");
 const konsultasiRoutes = require("./routes/konsultasiRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
 const authRoutes = require("./routes/authRoutes");
+const icd10Routes = require("./routes/icd10Routes");
 
 app.get("/", (req, res) => {
   res.status(200).send("Service is healthy");
@@ -75,6 +88,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/pasien", apiLimiter, pasienRoutes);
 app.use("/api/konsultasi", apiLimiter, konsultasiRoutes);
 app.use("/api/analytics", apiLimiter, analyticsRoutes);
+app.use("/api/icd10", searchLimiter, icd10Routes);
 
 app.get("/api", (req, res) => {
   res.send("Patient Management API is running...");

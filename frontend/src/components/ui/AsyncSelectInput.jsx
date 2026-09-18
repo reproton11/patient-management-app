@@ -1,10 +1,11 @@
-// patient-management-app/frontend/src/components/ui/SelectInput.jsx
-import Select from "react-select";
+// patient-management-app/frontend/src/components/ui/AsyncSelectInput.jsx
+import AsyncSelect from "react-select/async";
 import { buildStyles } from "./selectStyles";
 import SelectDropdownIndicator from "./SelectDropdownIndicator";
 
-const SelectInput = ({ error = false, ...props }) => (
-  <Select
+// Versi async dari SelectInput: opsi diambil per ketikan lewat loadOptions.
+const AsyncSelectInput = ({ error = false, ...props }) => (
+  <AsyncSelect
     styles={buildStyles(error)}
     components={{ DropdownIndicator: SelectDropdownIndicator }}
     menuPortalTarget={document.body}
@@ -16,4 +17,4 @@ const SelectInput = ({ error = false, ...props }) => (
   />
 );
 
-export default SelectInput;
+export default AsyncSelectInput;
