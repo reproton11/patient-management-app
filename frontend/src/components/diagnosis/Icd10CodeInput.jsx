@@ -1,19 +1,20 @@
 // patient-management-app/frontend/src/components/diagnosis/Icd10CodeInput.jsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import api from "../../services/api";
 import AsyncSelectInput from "../ui/AsyncSelectInput";
 
-// Kode tersering di klinik supaya dokter tidak perlu mengetik sama sekali
-const QUICK_CODES = [
-  "K21.9",
-  "I10",
+// 8 besar diagnosis klinik (hasil analisis histori soap.A) sebagai fallback
+// bila GET /icd10/populer gagal diambil
+const DEFAULT_QUICK_CODES = [
   "K30",
-  "E11.9",
-  "A09",
+  "K76.0",
+  "I10",
+  "K21.9",
+  "I25.1",
+  "B18.1",
+  "K59.0",
   "K29.7",
-  "K74.6",
-  "K80.2",
 ];
 
 const fetchIcd10 = async (q) => {
@@ -27,6 +28,17 @@ const fetchIcd10 = async (q) => {
 
 const Icd10CodeInput = ({ onAppend }) => {
   const [loadError, setLoadError] = useState(false);
+  const [quickCodes, setQuickCodes] = useState(DEFAULT_QUICK_CODES);
+
+  useEffect(() => {
+    api
+      .get("/icd10/populer")
+      .then(({ data }) => {
+        const kode = (data.hasil || []).map((item) => item.kode);
+        if (kode.length) setQuickCodes(kode);
+      })
+      .catch(() => {});
+  }, []);
 
   const loadOptions = async (input) => {
     const q = input.trim();
@@ -88,7 +100,7 @@ const Icd10CodeInput = ({ onAppend }) => {
           Kode sering digunakan
         </p>
         <div className="mt-1.5 flex flex-wrap gap-2">
-          {QUICK_CODES.map((kode) => (
+          {quickCodes.map((kode) => (
             <button
               key={kode}
               type="button"

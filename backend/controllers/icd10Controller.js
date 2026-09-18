@@ -4,6 +4,7 @@
 // per ketikan tidak melakukan split berulang atas ~10rb nama.
 const rawCatalog = require("../data/icd10.json");
 const asyncHandler = require("../middlewares/asyncHandler");
+const Konsultasi = require("../models/Konsultasi");
 
 // Singkatan/istilah yang sering ditulis dokter tetapi tidak ada di nama resmi
 const ALIAS = {
@@ -20,7 +21,24 @@ const ALIAS = {
   tifus: "A01.0",
   kolesterol: "E78.5",
   "asam urat": "M10.9",
+  cad: "I25.1",
+  sembelit: "K59.0",
+  ppok: "J44.9",
+  fatty: "K76.0",
 };
+
+// 8 besar diagnosis klinik hasil analisis teks soap.A histori; dipakai untuk
+// mem-pad badge "kode sering digunakan" selama data kode masih kosong.
+const DEFAULT_POPULER = [
+  "K30",
+  "K76.0",
+  "I10",
+  "K21.9",
+  "I25.1",
+  "B18.1",
+  "K59.0",
+  "K29.7",
+];
 
 const MAX_LIMIT = 20;
 const MIN_QUERY_LENGTH = 2;
@@ -110,4 +128,47 @@ const searchIcd10 = asyncHandler(async (req, res) => {
   res.json({ hasil });
 });
 
-module.exports = { searchIcd10 };
+// Kode sering digunakan: frekuensi pola "KODE - " di soap.A semua konsultasi,
+// diurutkan lalu dipad dari DEFAULT_POPULER hingga 8 badge. Cache 10 menit.
+const POPULER_LIMIT = 8;
+const POPULER_TTL_MS = 10 * 60 * 1000;
+const KODE_LINE_RE = /(?:^|\n)\s*([A-Z][0-9]{2}(?:\.[0-9A-Z]{1,4})?)\s*-/g;
+let populerCache = { data: null, at: 0 };
+
+const getIcd10Populer = asyncHandler(async (req, res) => {
+  if (populerCache.data && Date.now() - populerCache.at < POPULER_TTL_MS) {
+    return res.json({ hasil: populerCache.data });
+  }
+
+  const rows = await Konsultasi.find({}, { "soap.A": 1 }).lean();
+  const counts = new Map();
+  for (const row of rows) {
+    const teks = (row.soap && row.soap.A) || "";
+    for (const m of teks.matchAll(KODE_LINE_RE)) {
+      counts.set(m[1], (counts.get(m[1]) || 0) + 1);
+    }
+  }
+
+  const kodeFinal = [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([kode]) => kode)
+    .slice(0, POPULER_LIMIT);
+  for (const kode of DEFAULT_POPULER) {
+    if (kodeFinal.length >= POPULER_LIMIT) break;
+    if (!kodeFinal.includes(kode)) kodeFinal.push(kode);
+  }
+
+  const hasil = kodeFinal
+    .map((kode) => catalog.find((entry) => entry.kode === kode))
+    .filter(Boolean)
+    .map((entry) => ({
+      kode: entry.kode,
+      nama: entry.nama,
+      namaEn: entry.namaEn,
+    }));
+
+  populerCache = { data: hasil, at: Date.now() };
+  res.json({ hasil });
+});
+
+module.exports = { searchIcd10, getIcd10Populer };
