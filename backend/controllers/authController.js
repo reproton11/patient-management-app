@@ -40,7 +40,12 @@ exports.login = asyncHandler(async (req, res) => {
   res.json({
     message: "Login berhasil",
     token: signToken(user),
-    user: { id: user._id, nama: user.nama, username: user.username },
+    user: {
+      id: user._id,
+      nama: user.nama,
+      username: user.username,
+      role: user.role,
+    },
   });
 });
 

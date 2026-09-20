@@ -23,6 +23,15 @@ const userSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    role: {
+      type: String,
+      enum: ["petugas", "dokter"],
+      default: "petugas",
+    },
+    permanentSession: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

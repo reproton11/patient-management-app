@@ -12,9 +12,14 @@ if (!process.env.JWT_SECRET) {
 
 const signToken = (user) =>
   jwt.sign(
-    { id: user._id.toString(), nama: user.nama, username: user.username },
+    {
+      id: user._id.toString(),
+      nama: user.nama,
+      username: user.username,
+      role: user.role || "petugas",
+    },
     JWT_SECRET,
-    { expiresIn: TOKEN_EXPIRES_IN }
+    user.permanentSession ? {} : { expiresIn: TOKEN_EXPIRES_IN }
   );
 
 const verifyToken = (token) => jwt.verify(token, JWT_SECRET);
